@@ -11,10 +11,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useActionState } from "react";
-import { loginPatient } from "@/services/auth/login";
+import { loginUser } from "@/services/auth/login";
 
 export default function LoginForm() {
-  const [state, formAction, isPending] = useActionState(loginPatient, null);
+  const [state, formAction, isPending] = useActionState(loginUser, null);
 
   // const getFieldError = (fieldName: string) => {
   //   if (state && state.errors) {

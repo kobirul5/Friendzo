@@ -6,18 +6,17 @@ import {
   FieldLabel,
   FieldContent,
   FieldDescription,
-  FieldError,
   FieldGroup,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useActionState } from "react";
-import { registerPatient } from "@/services/auth/register";
+import { registerUser } from "@/services/auth/register";
 
 
 export default function RegistrationForm() {
 
-  const [state, formAction, isPending] = useActionState(registerPatient, null);
+  const [state, formAction, isPending] = useActionState(registerUser, null);
 
   const getFieldError = (fieldName: string) => {
     if (!state?.errors) return null;
@@ -40,11 +39,11 @@ export default function RegistrationForm() {
           <FieldContent>
             <Input
               name="name"
-              placeholder="Enter patient name"
+              placeholder="Enter your name"
               disabled={isPending}
             />
             <FieldDescription>
-              Full name of the patient
+              Full name of the user
             </FieldDescription>
           </FieldContent>
           {
@@ -140,7 +139,7 @@ export default function RegistrationForm() {
       </FieldGroup>
 
       <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? "Registering..." : "Register Patient"}
+        {isPending ? "Registering..." : "Register User"}
       </Button>
     </form>
   );

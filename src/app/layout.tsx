@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "health-core",
+  title: "friendzo",
   description: "Health Core Application with Next.js 16",
 };
 

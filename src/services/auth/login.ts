@@ -12,7 +12,7 @@ const loginValidationZodSchema = z.object({
     password: z.string().min(4, "Password must be at least 6 characters").max(32, "Password must be at most 32 characters"),
 })
 
-export const loginPatient = async (_currentState: any, formData: any): Promise<any> => {
+export const loginUser = async (_currentState: any, formData: any): Promise<any> => {
 
     let accessTokenObj: null | any= null;
     let refreshTokenObj: null | any = null;
@@ -93,7 +93,7 @@ export const loginPatient = async (_currentState: any, formData: any): Promise<a
         return result
 
     } catch (error) {
-        console.log(error, "Patient registration Failed");
+        console.log(error, "User login failed");
     }
 }
 

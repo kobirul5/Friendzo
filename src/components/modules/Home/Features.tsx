@@ -4,26 +4,26 @@ import { Card, CardContent } from "@/components/ui/card"
 const features = [
   {
     icon: Bot,
-    title: "AI-powered doctor recommendations",
+    title: "AI-powered support recommendations",
     description:
-      "Our intelligent matching system connects you with the perfect doctor based on your symptoms and medical history.",
+      "Our intelligent matching system connects users with the right support options based on their needs.",
   },
   {
     icon: UserCheck,
-    title: "Verified & experienced doctors",
+    title: "Verified and trusted experts",
     description:
-      "All our healthcare professionals are fully licensed, verified, and have years of experience in their specialties.",
+      "All service providers are verified and reviewed to ensure reliable support.",
   },
   {
     icon: MessageSquare,
-    title: "Video & chat consultations",
-    description: "Choose between secure video calls or text-based consultations based on your comfort and convenience.",
+    title: "Video and chat support",
+    description: "Choose secure video calls or text chat based on your comfort and convenience.",
   },
   {
     icon: Clock,
-    title: "24/7 online medical support",
+    title: "24/7 online assistance",
     description:
-      "Access healthcare whenever you need it. Our doctors are available around the clock for your medical needs.",
+      "Access support whenever you need it with around-the-clock availability.",
   },
 ]
 

@@ -16,7 +16,7 @@ const registerValidationZodSchema = z.object({
     }),
 })
 
-export const registerPatient = async (_currentState:any, formData:any):Promise<any> => {
+export const registerUser = async (_currentState:any, formData:any):Promise<any> => {
  try {
 
 
@@ -41,7 +41,7 @@ export const registerPatient = async (_currentState:any, formData:any):Promise<a
 
         const registerData = {
         password: formData.get("password"),
-        patient: {
+        user: {
             name: formData.get("name"),
             email: formData.get("email"),
             address: formData.get("address"),
@@ -59,7 +59,7 @@ export const registerPatient = async (_currentState:any, formData:any):Promise<a
     return res
 
  } catch (error) {
-    console.log(error, "Patient registration Faild");
+    console.log(error, "User registration failed");
  }
 }
 

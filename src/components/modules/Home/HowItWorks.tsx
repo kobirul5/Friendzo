@@ -12,14 +12,14 @@ const steps = [
   {
     icon: Calendar,
     step: "02",
-    title: "Get matched with doctors",
-    description: "Our AI recommends the best specialists for your specific needs.",
+    title: "Get matched with support",
+    description: "Our AI recommends the best support options for your specific needs.",
   },
   {
     icon: Video,
     step: "03",
-    title: "Schedule consultation",
-    description: "Book a video or chat consultation at your preferred time.",
+    title: "Start a support session",
+    description: "Book a video or chat session at your preferred time.",
   },
   {
     icon: FileText,
@@ -68,11 +68,11 @@ export function HowItWorks() {
               Ready to experience better healthcare?
             </h3>
             <p className="mx-auto mb-8 max-w-2xl text-muted-foreground text-pretty leading-relaxed">
-              Join thousands of patients who trust our AI-powered platform for their medical needs.
+              Join thousands of users who trust our AI-powered platform for daily support needs.
             </p>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Button size="lg" className="h-12 px-8 text-base font-medium shadow-lg hover:shadow-xl transition-shadow">
-                Find a Doctor Now
+                Get Started Now
               </Button>
               <Button
                 size="lg"

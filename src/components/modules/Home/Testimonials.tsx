@@ -2,31 +2,32 @@
 
 import { Card } from "@/components/ui/card"
 import { Star } from "lucide-react"
+import Image from "next/image"
 
 const testimonials = [
     {
         name: "Sarah Johnson",
-        role: "Patient",
+        role: "User",
         image: "/assets/professional-woman-smiling.png",
         rating: 5,
-        text: "The AI matching system found me the perfect dermatologist in minutes. I had my video consultation the same day and received treatment advice immediately. This platform is a game-changer!",
-        condition: "Skin Condition",
+        text: "The AI suggestions helped me find the right support flow in minutes. Everything felt fast and organized.",
+        topic: "Account Support",
     },
     {
         name: "Michael Chen",
-        role: "Patient",
+        role: "User",
         image: "/assets/professional-asian-man-smiling.jpg",
         rating: 5,
-        text: "I was skeptical about online consultations, but the doctor was incredibly thorough and professional. Got my prescription within hours. Saved me a trip to the clinic!",
-        condition: "Flu & Fever",
+        text: "I resolved my issue the same day through chat support. The experience was smooth and reliable.",
+        topic: "Billing Help",
     },
     {
         name: "Emily Rodriguez",
-        role: "Patient",
+        role: "User",
         image: "/assets/professional-hispanic-woman-smiling.jpg",
         rating: 5,
-        text: "As a busy mom, being able to consult with a pediatrician at 10 PM was invaluable. The doctor was patient, knowledgeable, and put my mind at ease about my daughter's symptoms.",
-        condition: "Pediatric Care",
+        text: "As a busy parent, this platform saves a lot of time. Support responses are clear and quick.",
+        topic: "General Support",
     },
 ]
 
@@ -35,9 +36,9 @@ export function Testimonials() {
         <section className="py-20 px-4 bg-zinc-950">
             <div className="container mx-auto max-w-7xl">
                 <div className="text-center mb-12">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">What Our Patients Say</h2>
+                    <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">What Our Users Say</h2>
                     <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
-                        Real experiences from real patients who found the care they needed through our platform
+                        Real experiences from users who solved their problems quickly through Friendzo.
                     </p>
                 </div>
 
@@ -53,14 +54,16 @@ export function Testimonials() {
                             <p className="text-zinc-300 mb-6 leading-relaxed">{testimonial.text}</p>
 
                             <div className="flex items-center gap-4 pt-4 border-t border-zinc-800">
-                                <img
+                                <Image
                                     src={testimonial.image || "/placeholder.svg"}
                                     alt={testimonial.name}
+                                    width={48}
+                                    height={48}
                                     className="w-12 h-12 rounded-full object-cover"
                                 />
                                 <div>
                                     <h4 className="font-semibold text-white">{testimonial.name}</h4>
-                                    <p className="text-sm text-zinc-400">{testimonial.condition}</p>
+                                    <p className="text-sm text-zinc-400">{testimonial.topic}</p>
                                 </div>
                             </div>
                         </Card>
@@ -74,7 +77,7 @@ export function Testimonials() {
                                 <Star key={i} className="w-5 h-5 fill-yellow-500 text-yellow-500" />
                             ))}
                         </div>
-            <span>from over 10,000 patient reviews</span>                        <span>from over 10,000+ patient reviews</span>
+                        <span>from over 10,000+ user reviews</span>
                     </div>
                 </div>
             </div>

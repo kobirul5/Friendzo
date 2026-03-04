@@ -1,5 +1,11 @@
 import RegistrationForm from "@/components/registration-form";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function RegisterPage() {
   return (
@@ -7,10 +13,10 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
-            Patient Registration
+            User Registration
           </CardTitle>
           <CardDescription className="text-center">
-            Create a new patient account
+            Create a new user account
           </CardDescription>
         </CardHeader>
         <CardContent>

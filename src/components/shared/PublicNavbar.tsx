@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Stethoscope } from "lucide-react";
+import { Menu, Users } from "lucide-react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 
 export default function Navbar() {
 
 
   const navItems = [
-    { name: "Find Doctors", href: "/doctors" },
-    { name: "Appointments", href: "/appointments" },
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Appointments", href: "/dashboard/my-apointments" },
     { name: "Services", href: "/services" },
     { name: "About Us", href: "/about" },
   ];
@@ -23,7 +23,7 @@ export default function Navbar() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <Stethoscope className="h-6 w-6 text-primary" />
+          <Users className="h-6 w-6 text-primary" />
           <span className="text-lg font-semibold">Health Core</span>
         </Link>
 

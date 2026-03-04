@@ -1,7 +1,7 @@
-export type UserRole = "ADMIN" | "DOCTOR" | "PATIENT";
+export type UserRole = "ADMIN" | "USER";
 
 // exact : ["/my-profile", "settings"]
-//   patterns: [/^\/dashboard/, /^\/patient/], // Routes starting with /dashboard/* /patient/*
+//   patterns: [/^\/dashboard/, /^\/user/], // Routes starting with /dashboard/* /user/*
 export type RouteConfig = {
     exact: string[],
     patterns: RegExp[],
@@ -14,17 +14,12 @@ export const commonProtectedRoutes: RouteConfig = {
     patterns: [], // [/password/change-password, /password/reset-password => /password/*]
 }
 
-export const doctorProtectedRoutes: RouteConfig = {
-    patterns: [/^\/doctor/], // Routes starting with /doctor/* , /assitants, /appointments/*
-    exact: [], // "/assistants"
-}
-
 export const adminProtectedRoutes: RouteConfig = {
     patterns: [/^\/admin/], // Routes starting with /admin/*
     exact: [], // "/admins"
 }
 
-export const patientProtectedRoutes: RouteConfig = {
+export const userProtectedRoutes: RouteConfig = {
     patterns: [/^\/dashboard/], // Routes starting with /dashboard/*
     exact: [], // "/dashboard"
 }
@@ -41,15 +36,12 @@ export const isRouteMatches = (pathname: string, routes: RouteConfig): boolean =
     // if pathname === /dashboard/my-appointments => matches /^\/dashboard/ => true
 }
 
-export const getRouteOwner = (pathname: string): "ADMIN" | "DOCTOR" | "PATIENT" | "COMMON" | null => {
+export const getRouteOwner = (pathname: string): "ADMIN" | "USER" | "COMMON" | null => {
     if (isRouteMatches(pathname, adminProtectedRoutes)) {
         return "ADMIN";
     }
-    if (isRouteMatches(pathname, doctorProtectedRoutes)) {
-        return "DOCTOR";
-    }
-    if (isRouteMatches(pathname, patientProtectedRoutes)) {
-        return "PATIENT";
+    if (isRouteMatches(pathname, userProtectedRoutes)) {
+        return "USER";
     }
     if (isRouteMatches(pathname, commonProtectedRoutes)) {
         return "COMMON";
@@ -61,10 +53,7 @@ export const getDefaultDashboardRoute = (role: UserRole): string => {
     if (role === "ADMIN") {
         return "/admin/dashboard";
     }
-    if (role === "DOCTOR") {
-        return "/doctor/dashboard";
-    }
-    if (role === "PATIENT") {
+    if (role === "USER") {
         return "/dashboard";
     }
     return "/";

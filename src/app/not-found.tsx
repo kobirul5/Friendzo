@@ -36,16 +36,16 @@ export default function NotFound() {
           <Button asChild variant="outline" size="lg" className="gap-2 min-w-50 bg-transparent">
             <Link href="/">
               <Search className="w-4 h-4" />
-              Find a Doctor
+              Explore Services
             </Link>
           </Button>
         </div>
 
         {/* Help text */}
         <p className="text-sm text-muted-foreground pt-8">
-          Need immediate medical assistance?{" "}
+          Need help navigating?{" "}
           <Link href="/" className="text-primary hover:underline font-medium">
-            Connect with a doctor now
+            Go back to homepage
           </Link>
         </p>
       </div>
