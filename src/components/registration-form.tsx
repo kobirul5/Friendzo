@@ -48,7 +48,7 @@ export default function RegistrationForm() {
           </FieldContent>
           {
             getFieldError("name") && (
-              <p className="text-red-500">{getFieldError("name")}</p>
+              <p className="text-red-500 text-sm">{getFieldError("name")}</p>
             )
           }
         </Field>
@@ -71,7 +71,7 @@ export default function RegistrationForm() {
           </FieldContent>
           {
             getFieldError("email") && (
-              <p className="text-red-500">{getFieldError("name")}</p>
+              <p className="text-red-500 text-sm">{getFieldError("email")}</p>
             )
           }
         </Field>
@@ -88,7 +88,7 @@ export default function RegistrationForm() {
           </FieldContent>
           {
             getFieldError("address") && (
-              <p className="text-red-500">{getFieldError("name")}</p>
+              <p className="text-red-500 text-sm">{getFieldError("address")}</p>
             )
           }
         </Field>
@@ -111,12 +111,12 @@ export default function RegistrationForm() {
           </FieldContent>
           {
             getFieldError("password") && (
-              <p className="text-red-500">{getFieldError("name")}</p>
+              <p className="text-red-500 text-sm">{getFieldError("password")}</p>
             )
           }
         </Field>
 
-       {/* Confirm Password */}
+        {/* Confirm Password */}
         <Field>
           <FieldLabel>
             Confirm Password <span className="text-red-500">*</span>
@@ -131,7 +131,7 @@ export default function RegistrationForm() {
           </FieldContent>
           {
             getFieldError("confirmPassword") && (
-              <p className="text-red-500">{getFieldError("confirmPassword")}</p>
+              <p className="text-red-500 text-sm">{getFieldError("confirmPassword")}</p>
             )
           }
         </Field>

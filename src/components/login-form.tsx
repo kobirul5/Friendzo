@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useActionState } from "react";
 import { loginUser } from "@/services/auth/login";
+import Link from "next/link";
+import { LucideArrowRight } from "lucide-react";
 
 export default function LoginForm() {
   const [state, formAction, isPending] = useActionState(loginUser, null);
@@ -28,14 +30,14 @@ export default function LoginForm() {
   //   }
   // }
   const getFieldError = (fieldName: string) => {
-  if (!state?.errors) return null;
+    if (!state?.errors) return null;
 
-  const fieldError = state.errors.find(
-    (err: any) => err.field === fieldName
-  );
+    const fieldError = state.errors.find(
+      (err: any) => err.field === fieldName
+    );
 
-  return fieldError?.message ?? null;
-};
+    return fieldError?.message ?? null;
+  };
 
   return (
     <form action={formAction} className="space-y-8">
@@ -88,9 +90,19 @@ export default function LoginForm() {
         </Field>
       </FieldGroup>
 
+      <div className="flex justify-end -mt-4">
+        <Link
+          href="/foget-password"
+          className="text-sm font-medium text-primary hover:underline transition-all"
+        >
+          Forgot password?
+        </Link>
+      </div>
+
       {/* Submit Button */}
-      <Button type="submit" className="w-full" disabled={isPending}>
+      <Button type="submit" className="w-full h-12 text-base font-semibold group" disabled={isPending}>
         {isPending ? "Logging in..." : "Login"}
+        {!isPending && <LucideArrowRight className="ml-2 transition-transform group-hover:translate-x-1" size={18} />}
       </Button>
     </form>
   );

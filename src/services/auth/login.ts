@@ -2,7 +2,7 @@
 "use server"
 
 import z from "zod";
-import {parse} from "cookie";
+import { parse } from "cookie";
 import { cookies } from "next/headers";
 
 const loginValidationZodSchema = z.object({
@@ -14,7 +14,7 @@ const loginValidationZodSchema = z.object({
 
 export const loginUser = async (_currentState: any, formData: any): Promise<any> => {
 
-    let accessTokenObj: null | any= null;
+    let accessTokenObj: null | any = null;
     let refreshTokenObj: null | any = null;
 
     try {
@@ -25,15 +25,15 @@ export const loginUser = async (_currentState: any, formData: any): Promise<any>
 
         const valiDatedField = loginValidationZodSchema.safeParse(loginData);
         if (!valiDatedField.success) {
-           return {
-            success: false,
-            errors: valiDatedField.error.issues.map((issue) => {
-                return {
-                    field: issue.path[0],
-                    message: issue.message
-                }
-            }),
-           }
+            return {
+                success: false,
+                errors: valiDatedField.error.issues.map((issue) => {
+                    return {
+                        field: issue.path[0],
+                        message: issue.message
+                    }
+                }),
+            }
         }
 
         const res = await fetch("http://localhost:5000/api/v1/auth/login", {
@@ -46,49 +46,31 @@ export const loginUser = async (_currentState: any, formData: any): Promise<any>
 
         const result = await res.json()
 
+        if (!result.success) {
+            return result;
+        }
+
         const cookieHeader = res.headers.getSetCookie();
-        
-        if(cookieHeader && cookieHeader.length > 0) {
+        const cookieStore = await cookies();
+
+        if (cookieHeader && cookieHeader.length > 0) {
             cookieHeader.forEach((cookie) => {
                 const parsedCookie = parse(cookie);
-                console.log(parsedCookie, "parsedCookie");
-                if(parsedCookie['accessToken']) {
-                    accessTokenObj = parsedCookie
-                }
-                if(parsedCookie['refreshToken']) {
-                    refreshTokenObj = parsedCookie
+                const cookieName = Object.keys(parsedCookie)[0];
+                const cookieValue = parsedCookie[cookieName];
+
+                if ((cookieName === "accessToken" || cookieName === "refreshToken") && cookieValue) {
+                    cookieStore.set(cookieName as string, cookieValue, {
+                        httpOnly: true,
+                        path: parsedCookie.path || "/",
+                        maxAge: parsedCookie['Max-Age'] ? parseInt(parsedCookie['Max-Age']) : undefined,
+                        expires: parsedCookie.expires ? new Date(parsedCookie.expires) : undefined,
+                        secure: process.env.NODE_ENV === "production",
+                        sameSite: (parsedCookie.sameSite as any) || "lax",
+                    });
                 }
             })
-        }else {
-            throw new Error("No set cookie header found");
         }
-
-        if(!accessTokenObj && !refreshTokenObj) {
-            throw new Error("Access token or refresh token not found");
-        }
-
-        const  cookieStore = await cookies()
-
-        console.log(cookieStore, "cookieStore");
-
-        cookieStore.set("accessToken", accessTokenObj.accessToken, {
-            httpOnly: true,
-            path: accessTokenObj.path,
-            maxAge: accessTokenObj['Max-Age'],
-            expires: accessTokenObj.expires,
-            secure: true,
-            sameSite: accessTokenObj.sameSite,
-        });
-        cookieStore.set("refreshToken", refreshTokenObj.refreshToken, {
-            httpOnly: true,
-            path: refreshTokenObj.path,
-            maxAge: refreshTokenObj.maxAge,
-            expires: refreshTokenObj.expires,
-            secure: true,
-            sameSite: refreshTokenObj.sameSite,
-        });
-
-        
 
         return result
 
