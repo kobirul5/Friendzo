@@ -10,13 +10,20 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { registerUser } from "@/services/auth/register";
-
+import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export default function RegistrationForm() {
-
+  const router = useRouter();
   const [state, formAction, isPending] = useActionState(registerUser, null);
+
+  useEffect(() => {
+    if (state?.success) {
+      router.push("/dashboard");
+    }
+  }, [state, router]);
 
   const getFieldError = (fieldName: string) => {
     if (!state?.errors) return null;
@@ -30,28 +37,45 @@ export default function RegistrationForm() {
 
   return (
     <form action={formAction} className="space-y-8">
+      {state?.success === false && state?.message && (
+        <div className="p-3 bg-red-100 text-red-600 rounded-md text-sm border border-red-200">
+          {state.message}
+        </div>
+      )}
       <FieldGroup>
-        {/* Name */}
-        <Field>
-          <FieldLabel>
-            Name <span className="text-red-500">*</span>
-          </FieldLabel>
-          <FieldContent>
-            <Input
-              name="name"
-              placeholder="Enter your name"
-              disabled={isPending}
-            />
-            <FieldDescription>
-              Full name of the user
-            </FieldDescription>
-          </FieldContent>
-          {
-            getFieldError("name") && (
-              <p className="text-red-500 text-sm">{getFieldError("name")}</p>
-            )
-          }
-        </Field>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* First Name */}
+          <Field>
+            <FieldLabel>
+              First Name <span className="text-red-500">*</span>
+            </FieldLabel>
+            <FieldContent>
+              <Input
+                name="firstName"
+                placeholder="John"
+                disabled={isPending}
+              />
+            </FieldContent>
+            {getFieldError("firstName") && (
+              <p className="text-red-500 text-sm mt-1">{getFieldError("firstName")}</p>
+            )}
+          </Field>
+
+          {/* Last Name */}
+          <Field>
+            <FieldLabel>Last Name</FieldLabel>
+            <FieldContent>
+              <Input
+                name="lastName"
+                placeholder="Doe"
+                disabled={isPending}
+              />
+            </FieldContent>
+            {getFieldError("lastName") && (
+              <p className="text-red-500 text-sm mt-1">{getFieldError("lastName")}</p>
+            )}
+          </Field>
+        </div>
 
         {/* Email */}
         <Field>
@@ -62,84 +86,126 @@ export default function RegistrationForm() {
             <Input
               name="email"
               type="email"
-              placeholder="Enter email"
+              placeholder="john@example.com"
               disabled={isPending}
             />
-            <FieldDescription>
-              We&apos;ll use this to contact you
-            </FieldDescription>
           </FieldContent>
-          {
-            getFieldError("email") && (
-              <p className="text-red-500 text-sm">{getFieldError("email")}</p>
-            )
-          }
+          {getFieldError("email") && (
+            <p className="text-red-500 text-sm mt-1">{getFieldError("email")}</p>
+          )}
+        </Field>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Phone Number */}
+          <Field>
+            <FieldLabel>Phone Number</FieldLabel>
+            <FieldContent>
+              <Input
+                name="phoneNumber"
+                placeholder="+1234567890"
+                disabled={isPending}
+              />
+            </FieldContent>
+            {getFieldError("phoneNumber") && (
+              <p className="text-red-500 text-sm mt-1">{getFieldError("phoneNumber")}</p>
+            )}
+          </Field>
+
+          {/* Age */}
+          <Field>
+            <FieldLabel>Age</FieldLabel>
+            <FieldContent>
+              <Input
+                name="age"
+                type="number"
+                placeholder="25"
+                disabled={isPending}
+              />
+            </FieldContent>
+            {getFieldError("age") && (
+              <p className="text-red-500 text-sm mt-1">{getFieldError("age")}</p>
+            )}
+          </Field>
+        </div>
+
+        {/* Gender */}
+        <Field>
+          <FieldLabel>Gender</FieldLabel>
+          <FieldContent>
+            <select
+              name="gender"
+              disabled={isPending}
+              className={cn(
+                "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              )}
+            >
+              <option value="">Select Gender</option>
+              <option value="HIM">Male (HIM)</option>
+              <option value="HER">Female (HER)</option>
+              <option value="EVERYONE">Other (EVERYONE)</option>
+            </select>
+          </FieldContent>
+          {getFieldError("gender") && (
+            <p className="text-red-500 text-sm mt-1">{getFieldError("gender")}</p>
+          )}
         </Field>
 
         {/* Address */}
         <Field>
-          <FieldLabel>Address (optional)</FieldLabel>
+          <FieldLabel>Address</FieldLabel>
           <FieldContent>
             <Input
               name="address"
-              placeholder="Enter address"
+              placeholder="123 Main St, City"
               disabled={isPending}
             />
           </FieldContent>
-          {
-            getFieldError("address") && (
-              <p className="text-red-500 text-sm">{getFieldError("address")}</p>
-            )
-          }
+          {getFieldError("address") && (
+            <p className="text-red-500 text-sm mt-1">{getFieldError("address")}</p>
+          )}
         </Field>
 
-        {/* Password */}
-        <Field>
-          <FieldLabel>
-            Password <span className="text-red-500">*</span>
-          </FieldLabel>
-          <FieldContent>
-            <Input
-              name="password"
-              type="password"
-              placeholder="Enter password"
-              disabled={isPending}
-            />
-            <FieldDescription>
-              Minimum 6 characters
-            </FieldDescription>
-          </FieldContent>
-          {
-            getFieldError("password") && (
-              <p className="text-red-500 text-sm">{getFieldError("password")}</p>
-            )
-          }
-        </Field>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Password */}
+          <Field>
+            <FieldLabel>
+              Password <span className="text-red-500">*</span>
+            </FieldLabel>
+            <FieldContent>
+              <Input
+                name="password"
+                type="password"
+                placeholder="••••••••"
+                disabled={isPending}
+              />
+            </FieldContent>
+            {getFieldError("password") && (
+              <p className="text-red-500 text-sm mt-1">{getFieldError("password")}</p>
+            )}
+          </Field>
 
-        {/* Confirm Password */}
-        <Field>
-          <FieldLabel>
-            Confirm Password <span className="text-red-500">*</span>
-          </FieldLabel>
-          <FieldContent>
-            <Input
-              name="confirmPassword"
-              type="password"
-              placeholder="Confirm password"
-              disabled={isPending}
-            />
-          </FieldContent>
-          {
-            getFieldError("confirmPassword") && (
-              <p className="text-red-500 text-sm">{getFieldError("confirmPassword")}</p>
-            )
-          }
-        </Field>
-
+          {/* Confirm Password */}
+          <Field>
+            <FieldLabel>
+              Confirm Password <span className="text-red-500">*</span>
+            </FieldLabel>
+            <FieldContent>
+              <Input
+                name="confirmPassword"
+                type="password"
+                placeholder="••••••••"
+                disabled={isPending}
+              />
+            </FieldContent>
+            {getFieldError("confirmPassword") && (
+              <p className="text-red-500 text-sm mt-1">{getFieldError("confirmPassword")}</p>
+            )}
+          </Field>
+        </div>
       </FieldGroup>
 
       <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? "Registering..." : "Register User"}
+        {isPending ? "Registering..." : "Create Account"}
       </Button>
     </form>
   );
