@@ -1,29 +1,29 @@
-import { Bot, UserCheck, MessageSquare, Clock } from "lucide-react"
+import { Share2, UserCheck, MessageSquare, Globe } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 
 const features = [
   {
-    icon: Bot,
-    title: "AI-powered support recommendations",
+    icon: Share2,
+    title: "AI-powered content feed",
     description:
-      "Our intelligent matching system connects users with the right support options based on their needs.",
+      "Our intelligent algorithm connects you with content and people that match your interests.",
   },
   {
     icon: UserCheck,
-    title: "Verified and trusted experts",
+    title: "Verified and trusted profiles",
     description:
-      "All service providers are verified and reviewed to ensure reliable support.",
+      "Connect with real people. Our verification system ensures a safe and authentic community.",
   },
   {
     icon: MessageSquare,
-    title: "Video and chat support",
-    description: "Choose secure video calls or text chat based on your comfort and convenience.",
+    title: "Real-time messaging & video",
+    description: "Stay in touch with instant chat and high-quality video calls with your friends.",
   },
   {
-    icon: Clock,
-    title: "24/7 online assistance",
+    icon: Globe,
+    title: "Global social connectivity",
     description:
-      "Access support whenever you need it with around-the-clock availability.",
+      "Join communities and discover new friends from around the world anytime.",
   },
 ]
 
@@ -34,10 +34,10 @@ export function Features() {
         <div className="mx-auto container">
           <div className="mb-16 text-center">
             <h2 className="mb-4 text-3xl font-bold tracking-tight text-balance sm:text-4xl md:text-5xl">
-              Healthcare reimagined for the modern world
+              Social Connection reimagined for the modern world
             </h2>
             <p className="mx-auto max-w-2xl text-lg text-muted-foreground text-pretty leading-relaxed">
-              Experience the future of healthcare with cutting-edge technology and compassionate care.
+              Experience the future of social networking with human-centric technology and authentic connections.
             </p>
           </div>
 

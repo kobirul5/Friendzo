@@ -10,24 +10,24 @@ const testimonials = [
         role: "User",
         image: "/assets/professional-woman-smiling.png",
         rating: 5,
-        text: "The AI suggestions helped me find the right support flow in minutes. Everything felt fast and organized.",
-        topic: "Account Support",
+        text: "I've connected with so many people who share my interests. The AI friend matching is actually impressive!",
+        topic: "Community Engagement",
     },
     {
         name: "Michael Chen",
         role: "User",
         image: "/assets/professional-asian-man-smiling.jpg",
         rating: 5,
-        text: "I resolved my issue the same day through chat support. The experience was smooth and reliable.",
-        topic: "Billing Help",
+        text: "Finally a social platform that feels authentic. Sharing my daily moments has never been this easy and fun.",
+        topic: "Daily Sharing",
     },
     {
         name: "Emily Rodriguez",
         role: "User",
         image: "/assets/professional-hispanic-woman-smiling.jpg",
         rating: 5,
-        text: "As a busy parent, this platform saves a lot of time. Support responses are clear and quick.",
-        topic: "General Support",
+        text: "The global feed keep me inspired every day. Friendzo is where I truly feel connected to my circle.",
+        topic: "Global Connectivity",
     },
 ]
 
@@ -36,15 +36,15 @@ export function Testimonials() {
         <section className="py-20 px-4 bg-zinc-950">
             <div className="container mx-auto max-w-7xl">
                 <div className="text-center mb-12">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">What Our Users Say</h2>
+                    <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">What Our Community Says</h2>
                     <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
-                        Real experiences from users who solved their problems quickly through Friendzo.
+                        Real stories from people who found their community on Friendzo.
                     </p>
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-8">
                     {testimonials.map((testimonial, index) => (
-                        <Card key={index} className="bg-zinc-900 border-zinc-800 p-6 hover:border-blue-500/50 transition-colors">
+                        <Card key={index} className="bg-zinc-900 border-zinc-800 p-6 hover:border-accent/50 transition-colors">
                             <div className="flex gap-1 mb-4">
                                 {[...Array(testimonial.rating)].map((_, i) => (
                                     <Star key={i} className="w-5 h-5 fill-yellow-500 text-yellow-500" />
@@ -77,7 +77,7 @@ export function Testimonials() {
                                 <Star key={i} className="w-5 h-5 fill-yellow-500 text-yellow-500" />
                             ))}
                         </div>
-                        <span>from over 10,000+ user reviews</span>
+                        <span>from over 100,000+ active users</span>
                     </div>
                 </div>
             </div>

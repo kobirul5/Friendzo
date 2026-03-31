@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "friendzo",
-  description: "Health Core Application with Next.js 16",
+  title: "Friendzo",
+  description: "Next-generation social media platform for authentic connections",
 };
 
 export default function RootLayout({

@@ -1,18 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Users } from "lucide-react";
+import { Menu } from "lucide-react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 
 export default function Navbar() {
 
 
   const navItems = [
-    { name: "Dashboard", href: "/dashboard" },
-    { name: "Appointments", href: "/dashboard/my-apointments" },
-    { name: "Services", href: "/services" },
+    { name: "Home", href: "/" },
+    { name: "Feed", href: "/dashboard" },
+    { name: "Explore", href: "/services" },
     { name: "About Us", href: "/about" },
   ];
 
@@ -23,8 +24,8 @@ export default function Navbar() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <Users className="h-6 w-6 text-primary" />
-          <span className="text-lg font-semibold">Health Core</span>
+          <Image src="/assets/logo.png" alt="Friendzo Logo" width={100} height={40} className="h-10 w-auto" />
+          <span className="text-lg font-semibold text-primary">Friendzo</span>
         </Link>
 
         {/* Desktop Nav */}
@@ -47,7 +48,7 @@ export default function Navbar() {
           <Button variant="outline">
             <Link href="/login">Login</Link>
           </Button>
-          <Button>Book Now</Button>
+          <Button>Join Now</Button>
         </div>
 
         {/* Mobile Menu */}
@@ -59,7 +60,7 @@ export default function Navbar() {
             <VisuallyHidden>
               <SheetTitle>Mobile Navigation</SheetTitle>
               <SheetDescription>
-                Navigation menu for telemedicine website
+                Navigation menu for Friendzo social media platform
               </SheetDescription>
             </VisuallyHidden>
 
@@ -77,7 +78,7 @@ export default function Navbar() {
                 <Button variant="outline" className="w-full">
                   <Link href="/login">Login</Link>
                 </Button>
-                <Button className="w-full">Book Now</Button>
+                <Button className="w-full">Join Now</Button>
               </div>
             </div>
           </SheetContent>
