@@ -21,16 +21,19 @@ export default function RegistrationForm() {
 
   useEffect(() => {
     if (state?.success) {
-      router.push("/dashboard");
+      const email = state.data?.user?.email || "";
+      if (email) {
+        sessionStorage.setItem("resetEmail", email);
+        sessionStorage.setItem("otpType", "verify");
+      }
+      router.push("/verify-otp");
     }
   }, [state, router]);
 
   const getFieldError = (fieldName: string) => {
     if (!state?.errors) return null;
 
-    const fieldError = state.errors.find(
-      (err: any) => err.field === fieldName
-    );
+    const fieldError = state.errors.find((err: any) => err.field === fieldName);
 
     return fieldError?.message ?? null;
   };
@@ -50,14 +53,12 @@ export default function RegistrationForm() {
               First Name <span className="text-red-500">*</span>
             </FieldLabel>
             <FieldContent>
-              <Input
-                name="firstName"
-                placeholder="John"
-                disabled={isPending}
-              />
+              <Input name="firstName" placeholder="John" disabled={isPending} />
             </FieldContent>
             {getFieldError("firstName") && (
-              <p className="text-red-500 text-sm mt-1">{getFieldError("firstName")}</p>
+              <p className="text-red-500 text-sm mt-1">
+                {getFieldError("firstName")}
+              </p>
             )}
           </Field>
 
@@ -65,14 +66,12 @@ export default function RegistrationForm() {
           <Field>
             <FieldLabel>Last Name</FieldLabel>
             <FieldContent>
-              <Input
-                name="lastName"
-                placeholder="Doe"
-                disabled={isPending}
-              />
+              <Input name="lastName" placeholder="Doe" disabled={isPending} />
             </FieldContent>
             {getFieldError("lastName") && (
-              <p className="text-red-500 text-sm mt-1">{getFieldError("lastName")}</p>
+              <p className="text-red-500 text-sm mt-1">
+                {getFieldError("lastName")}
+              </p>
             )}
           </Field>
         </div>
@@ -91,7 +90,9 @@ export default function RegistrationForm() {
             />
           </FieldContent>
           {getFieldError("email") && (
-            <p className="text-red-500 text-sm mt-1">{getFieldError("email")}</p>
+            <p className="text-red-500 text-sm mt-1">
+              {getFieldError("email")}
+            </p>
           )}
         </Field>
 
@@ -107,7 +108,9 @@ export default function RegistrationForm() {
               />
             </FieldContent>
             {getFieldError("phoneNumber") && (
-              <p className="text-red-500 text-sm mt-1">{getFieldError("phoneNumber")}</p>
+              <p className="text-red-500 text-sm mt-1">
+                {getFieldError("phoneNumber")}
+              </p>
             )}
           </Field>
 
@@ -123,7 +126,9 @@ export default function RegistrationForm() {
               />
             </FieldContent>
             {getFieldError("age") && (
-              <p className="text-red-500 text-sm mt-1">{getFieldError("age")}</p>
+              <p className="text-red-500 text-sm mt-1">
+                {getFieldError("age")}
+              </p>
             )}
           </Field>
         </div>
@@ -136,7 +141,7 @@ export default function RegistrationForm() {
               name="gender"
               disabled={isPending}
               className={cn(
-                "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
               )}
             >
               <option value="">Select Gender</option>
@@ -146,7 +151,9 @@ export default function RegistrationForm() {
             </select>
           </FieldContent>
           {getFieldError("gender") && (
-            <p className="text-red-500 text-sm mt-1">{getFieldError("gender")}</p>
+            <p className="text-red-500 text-sm mt-1">
+              {getFieldError("gender")}
+            </p>
           )}
         </Field>
 
@@ -161,7 +168,9 @@ export default function RegistrationForm() {
             />
           </FieldContent>
           {getFieldError("address") && (
-            <p className="text-red-500 text-sm mt-1">{getFieldError("address")}</p>
+            <p className="text-red-500 text-sm mt-1">
+              {getFieldError("address")}
+            </p>
           )}
         </Field>
 
@@ -180,7 +189,9 @@ export default function RegistrationForm() {
               />
             </FieldContent>
             {getFieldError("password") && (
-              <p className="text-red-500 text-sm mt-1">{getFieldError("password")}</p>
+              <p className="text-red-500 text-sm mt-1">
+                {getFieldError("password")}
+              </p>
             )}
           </Field>
 
@@ -198,7 +209,9 @@ export default function RegistrationForm() {
               />
             </FieldContent>
             {getFieldError("confirmPassword") && (
-              <p className="text-red-500 text-sm mt-1">{getFieldError("confirmPassword")}</p>
+              <p className="text-red-500 text-sm mt-1">
+                {getFieldError("confirmPassword")}
+              </p>
             )}
           </Field>
         </div>

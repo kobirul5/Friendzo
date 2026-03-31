@@ -26,6 +26,8 @@ export async function proxy(request: NextRequest) {
     const accessToken = request.cookies.get("accessToken")?.value || null;
 
     let userRole: UserRole | null = null;
+    let isVerified: boolean | null = null;
+
     if (accessToken) {
         try {
             const verifiedToken: JwtPayload | string = jwt.verify(accessToken, process.env.JWT_SECRET as string);
@@ -37,6 +39,8 @@ export async function proxy(request: NextRequest) {
             }
 
             userRole = normalizeTokenRole(verifiedToken.role);
+            isVerified = verifiedToken.isVerified;
+
             if (!userRole) {
                 cookieStore.delete("accessToken");
                 cookieStore.delete("refreshToken");
@@ -50,12 +54,13 @@ export async function proxy(request: NextRequest) {
         }
     }
 
-    const routerOwner = getRouteOwner(pathname);
-    //path = /admin/dashboard => "ADMIN"
-    //path = /my-profile => "COMMON"
-    //path = /login => null
-
     const isAuth = isAuthRoute(pathname)
+    const routerOwner = getRouteOwner(pathname);
+
+    // Rule for unverified users
+    if (accessToken && isVerified === false && pathname !== "/verify-otp" && !isAuth) {
+        return NextResponse.redirect(new URL('/verify-otp', request.url));
+    }
 
     // Rule 1 : User is logged in and trying to access auth route. Redirect to default dashboard
     if (accessToken && isAuth && userRole) {

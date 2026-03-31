@@ -10,13 +10,31 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { loginUser } from "@/services/auth/login";
 import Link from "next/link";
 import { LucideArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
+  const router = useRouter();
   const [state, formAction, isPending] = useActionState(loginUser, null);
+
+  useEffect(() => {
+    if (state?.success) {
+      if (state.data?.isVerified) {
+        router.push("/");
+      } else {
+        // Redirection for unverified users
+        const email = state?.data?.email || "";
+        if (email) {
+          sessionStorage.setItem("resetEmail", email);
+          sessionStorage.setItem("otpType", "verify");
+        }
+        router.push("/verify-otp");
+      }
+    }
+  }, [state, router]);
 
   // const getFieldError = (fieldName: string) => {
   //   if (state && state.errors) {
@@ -32,9 +50,7 @@ export default function LoginForm() {
   const getFieldError = (fieldName: string) => {
     if (!state?.errors) return null;
 
-    const fieldError = state.errors.find(
-      (err: any) => err.field === fieldName
-    );
+    const fieldError = state.errors.find((err: any) => err.field === fieldName);
 
     return fieldError?.message ?? null;
   };
@@ -55,15 +71,11 @@ export default function LoginForm() {
               placeholder="Enter your email"
               disabled={isPending}
             />
-            <FieldDescription>
-              Registered email address
-            </FieldDescription>
+            <FieldDescription>Registered email address</FieldDescription>
           </FieldContent>
-          {
-            getFieldError("email") && (
-              <p className="text-sm text-red-500">{getFieldError("email")}</p>
-            )
-          }
+          {getFieldError("email") && (
+            <p className="text-sm text-red-500">{getFieldError("email")}</p>
+          )}
         </Field>
 
         {/* Password */}
@@ -78,15 +90,11 @@ export default function LoginForm() {
               placeholder="Enter your password"
               disabled={isPending}
             />
-            <FieldDescription>
-              Your account password
-            </FieldDescription>
+            <FieldDescription>Your account password</FieldDescription>
           </FieldContent>
-          {
-            getFieldError("password") && (
-              <p className="text-sm text-red-500">{getFieldError("password")}</p>
-            )
-          }
+          {getFieldError("password") && (
+            <p className="text-sm text-red-500">{getFieldError("password")}</p>
+          )}
         </Field>
       </FieldGroup>
 
@@ -100,9 +108,18 @@ export default function LoginForm() {
       </div>
 
       {/* Submit Button */}
-      <Button type="submit" className="w-full h-12 text-base font-semibold group" disabled={isPending}>
+      <Button
+        type="submit"
+        className="w-full h-12 text-base font-semibold group"
+        disabled={isPending}
+      >
         {isPending ? "Logging in..." : "Login"}
-        {!isPending && <LucideArrowRight className="ml-2 transition-transform group-hover:translate-x-1" size={18} />}
+        {!isPending && (
+          <LucideArrowRight
+            className="ml-2 transition-transform group-hover:translate-x-1"
+            size={18}
+          />
+        )}
       </Button>
     </form>
   );
