@@ -7,11 +7,15 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from 
 import { Menu, UserCircle } from "lucide-react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 
-export default function Navbar({ user }: { user: any }) {
+type NavbarUser = {
+  email?: string;
+} | null;
+
+export default function Navbar({ user }: { user: NavbarUser }) {
 
   const navItems = [
     { name: "Home", href: "/" },
-    { name: "Feed", href: "/dashboard" },
+    { name: "Events", href: "/events" },
     { name: "Explore", href: "/services" },
     { name: "About Us", href: "/about" },
   ];
