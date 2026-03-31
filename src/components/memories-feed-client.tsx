@@ -2,9 +2,25 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Heart, LoaderCircle, MapPin, MessageCircle, Sparkles, X } from "lucide-react";
+import {
+  Heart,
+  LoaderCircle,
+  MapPin,
+  MessageCircle,
+  Send,
+  Sparkles,
+  Trash2,
+  X,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  createMemoryComment,
+  deleteMemoryComment,
+  getMemoryComments,
+  type MemoryComment,
+} from "@/services/memory-comment";
 import { getMemoryLikeStats, likeMemory, unlikeMemory } from "@/services/memory-like";
 
 type FeedUser = {
@@ -155,11 +171,13 @@ function FeedCard({
   item,
   onToggleLike,
   onViewLikes,
+  onViewComments,
   isPending,
 }: {
   item: MemoryFeedItem;
   onToggleLike: (memoryId: string, isLiked: boolean) => void;
   onViewLikes: (item: MemoryFeedItem) => void;
+  onViewComments: (item: MemoryFeedItem) => void;
   isPending: boolean;
 }) {
   const userName = getUserName(item.user);
@@ -252,10 +270,14 @@ function FeedCard({
                   {item.totalLikes ?? 0} likes
                 </button>
 
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-3 text-sm text-white backdrop-blur-md">
+                <button
+                  type="button"
+                  onClick={() => onViewComments(item)}
+                  className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-3 text-sm text-white backdrop-blur-md transition hover:bg-white/25"
+                >
                   <MessageCircle className="h-4 w-4" />
                   {item.totalComments ?? 0} comments
-                </span>
+                </button>
               </div>
             </div>
           </div>
@@ -265,13 +287,25 @@ function FeedCard({
   );
 }
 
-export default function MemoriesFeedClient({ initialItems }: { initialItems: MemoryFeedItem[] }) {
+export default function MemoriesFeedClient({
+  initialItems,
+  currentUserId,
+}: {
+  initialItems: MemoryFeedItem[];
+  currentUserId?: string | null;
+}) {
   const [items, setItems] = useState(initialItems);
   const [isPending, startTransition] = useTransition();
   const [likesModalOpen, setLikesModalOpen] = useState(false);
   const [selectedMemory, setSelectedMemory] = useState<MemoryFeedItem | null>(null);
   const [likedUsers, setLikedUsers] = useState<LikeUser[]>([]);
   const [isLikesLoading, setIsLikesLoading] = useState(false);
+  const [commentsModalOpen, setCommentsModalOpen] = useState(false);
+  const [comments, setComments] = useState<MemoryComment[]>([]);
+  const [commentText, setCommentText] = useState("");
+  const [isCommentsLoading, setIsCommentsLoading] = useState(false);
+  const [isCommentSubmitting, startCommentTransition] = useTransition();
+  const [commentMessage, setCommentMessage] = useState("");
 
   const handleToggleLike = (memoryId: string, isLiked: boolean) => {
     startTransition(async () => {
@@ -335,6 +369,99 @@ export default function MemoriesFeedClient({ initialItems }: { initialItems: Mem
     setIsLikesLoading(false);
   };
 
+  const handleViewComments = async (item: MemoryFeedItem) => {
+    setSelectedMemory(item);
+    setCommentsModalOpen(true);
+    setIsCommentsLoading(true);
+    setCommentMessage("");
+
+    const result = await getMemoryComments(item.id);
+
+    if (result.success) {
+      setComments(result.comments || []);
+      setItems((currentItems) =>
+        currentItems.map((currentItem) =>
+          currentItem.id === item.id
+            ? { ...currentItem, totalComments: result.comments?.length ?? currentItem.totalComments ?? 0 }
+            : currentItem
+        )
+      );
+      setSelectedMemory({
+        ...item,
+        totalComments: result.comments?.length ?? item.totalComments ?? 0,
+      });
+    } else {
+      setComments([]);
+      setCommentMessage(result.message || "Failed to load comments.");
+    }
+
+    setIsCommentsLoading(false);
+  };
+
+  const handleAddComment = () => {
+    if (!selectedMemory || !commentText.trim()) {
+      return;
+    }
+
+    startCommentTransition(async () => {
+      const result = await createMemoryComment(selectedMemory.id, commentText.trim());
+
+      if (!result?.success) {
+        setCommentMessage(result?.message || "Failed to add comment.");
+        return;
+      }
+
+      const refreshed = await getMemoryComments(selectedMemory.id);
+      if (refreshed.success) {
+        const nextComments = refreshed.comments || [];
+        setComments(nextComments);
+        setCommentText("");
+        setCommentMessage("");
+        setSelectedMemory({
+          ...selectedMemory,
+          totalComments: nextComments.length,
+        });
+        setItems((currentItems) =>
+          currentItems.map((item) =>
+            item.id === selectedMemory.id
+              ? { ...item, totalComments: nextComments.length }
+              : item
+          )
+        );
+      }
+    });
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    if (!selectedMemory) {
+      return;
+    }
+
+    startCommentTransition(async () => {
+      const result = await deleteMemoryComment(commentId);
+
+      if (!result?.success) {
+        setCommentMessage(result?.message || "Failed to delete comment.");
+        return;
+      }
+
+      const nextComments = comments.filter((comment) => comment.id !== commentId);
+      setComments(nextComments);
+      setCommentMessage("");
+      setSelectedMemory({
+        ...selectedMemory,
+        totalComments: nextComments.length,
+      });
+      setItems((currentItems) =>
+        currentItems.map((item) =>
+          item.id === selectedMemory.id
+            ? { ...item, totalComments: nextComments.length }
+            : item
+        )
+      );
+    });
+  };
+
   return (
     <>
       <section className="space-y-6">
@@ -363,6 +490,7 @@ export default function MemoriesFeedClient({ initialItems }: { initialItems: Mem
                 item={item}
                 onToggleLike={handleToggleLike}
                 onViewLikes={handleViewLikes}
+                onViewComments={handleViewComments}
                 isPending={isPending}
               />
             ))}
@@ -380,6 +508,136 @@ export default function MemoriesFeedClient({ initialItems }: { initialItems: Mem
         title={selectedMemory?.description || "Memory likes"}
         isLoading={isLikesLoading}
       />
+
+      {commentsModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-8">
+          <div className="w-full max-w-2xl rounded-[2rem] border border-white/50 bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+                  Memory comments
+                </p>
+                <h3 className="mt-2 text-xl font-semibold text-foreground">
+                  {selectedMemory?.description || "Comments"}
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {selectedMemory?.totalComments ?? comments.length} comments on this post.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setCommentsModalOpen(false)}
+                className="rounded-full"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="mt-5 flex gap-3">
+              <Input
+                value={commentText}
+                onChange={(event) => setCommentText(event.target.value)}
+                placeholder="Write a comment..."
+                className="h-11 rounded-full"
+                disabled={isCommentSubmitting}
+              />
+              <Button
+                type="button"
+                onClick={handleAddComment}
+                disabled={isCommentSubmitting || !commentText.trim()}
+                className="h-11 rounded-full px-5"
+              >
+                {isCommentSubmitting ? (
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                Comment
+              </Button>
+            </div>
+
+            {commentMessage ? (
+              <div className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+                {commentMessage}
+              </div>
+            ) : null}
+
+            <div className="mt-6 max-h-[24rem] space-y-3 overflow-y-auto pr-1">
+              {isCommentsLoading ? (
+                <div className="flex items-center justify-center py-10 text-muted-foreground">
+                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                  Loading comments...
+                </div>
+              ) : comments.length > 0 ? (
+                comments.map((comment) => {
+                  const name = getUserName(comment.user);
+                  const initials = name
+                    .split(" ")
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map((part) => part[0]?.toUpperCase())
+                    .join("");
+
+                  return (
+                    <div
+                      key={comment.id}
+                      className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-4"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                          {comment.user?.profileImage ? (
+                            <img
+                              src={comment.user.profileImage}
+                              alt={name}
+                              className="h-11 w-11 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                              {initials || "F"}
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">{name}</p>
+                            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                              {comment.content}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      {comment.createdAt ? (
+                        <div className="mt-3 flex items-center justify-between">
+                          <p className="text-xs text-muted-foreground">
+                            {formatDate(comment.createdAt)}
+                          </p>
+                          {currentUserId && comment.userId === currentUserId ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteComment(comment.id)}
+                              className="rounded-full"
+                              disabled={isCommentSubmitting}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Delete
+                            </Button>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="rounded-2xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+                  No comments yet for this memory.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

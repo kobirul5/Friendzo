@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { ImagePlus } from "lucide-react";
+import jwt from "jsonwebtoken";
 
 import MemoriesFeedClient, {
   type MemoryFeedItem,
@@ -38,6 +39,16 @@ async function fetchFeed<T>(path: string, accessToken?: string): Promise<T[]> {
 export default async function Home() {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get("accessToken")?.value;
+  let currentUserId: string | null = null;
+
+  if (accessToken) {
+    try {
+      const decoded = jwt.decode(accessToken) as { id?: string } | null;
+      currentUserId = decoded?.id || null;
+    } catch (error) {
+      console.error("JWT decode error on home page:", error);
+    }
+  }
 
   const memories = await fetchFeed<MemoryFeedItem>("/memories/all-memories", accessToken);
 
@@ -54,8 +65,7 @@ export default async function Home() {
                 One clean home feed for memories.
               </h1>
               <p className="mt-4 text-sm leading-7 text-muted-foreground sm:text-base">
-                The old homepage sections are removed. Now the home page only shows the full
-                memories feed in a clean single-column layout.
+                The old homepage sections are removed. Now the home page only shows the full memories feed in a clean single-column layout.
               </p>
             </div>
 
@@ -82,8 +92,7 @@ export default async function Home() {
 
           {!accessToken ? (
             <div className="mt-6 rounded-[1.6rem] border border-primary/10 bg-primary/5 px-5 py-4 text-sm leading-6 text-muted-foreground">
-              The live memories feed is protected by auth, so all memories will appear here after
-              login.
+              The live memories feed is protected by auth, so all memories will appear here after login.
             </div>
           ) : (
             <div className="mt-6 rounded-[1.6rem] border border-primary/10 bg-primary/5 px-5 py-4 text-sm leading-6 text-muted-foreground">
@@ -93,7 +102,7 @@ export default async function Home() {
         </section>
 
         <div className="mt-8">
-          <MemoriesFeedClient initialItems={memories} />
+          <MemoriesFeedClient initialItems={memories} currentUserId={currentUserId} />
         </div>
       </div>
     </main>

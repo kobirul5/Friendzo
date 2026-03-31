@@ -1,6 +1,7 @@
 import { getProfile } from "@/services/user/profile-service";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import { 
@@ -9,18 +10,49 @@ import {
   Calendar, 
   Settings, 
   Edit3, 
-  Users, 
-  UserPlus, 
   Grid, 
-  Gift, 
   Info, 
   Heart 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { MemoryCard } from "@/components/profile/memory-card";
 import { InterestBadge } from "@/components/profile/interest-badge";
+
+type InterestDetail = {
+  id: string;
+  name: string;
+  image?: string | null;
+};
+
+type ProfileMemory = {
+  id: string;
+  image: string;
+  description: string;
+};
+
+type ProfileEvent = {
+  id: string;
+  image: string;
+  description: string;
+  createdAt: string;
+};
+
+type ProfileData = {
+  firstName?: string | null;
+  lastName?: string | null;
+  profileImage?: string | null;
+  gender?: "HER" | "HIM" | "EVERYONE" | null;
+  age?: number | null;
+  address?: string | null;
+  followersCount: number;
+  followingsCount: number;
+  about?: string | null;
+  interestsDetails?: InterestDetail[];
+  memories?: ProfileMemory[];
+  event?: ProfileEvent[];
+  isProfileComplete?: boolean;
+};
 
 export default async function ProfilePage() {
   const cookieStore = await cookies();
@@ -30,10 +62,10 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
-  let decoded: any = null;
+  let decoded: { id?: string } | null = null;
   try {
     decoded = jwt.decode(accessToken);
-  } catch (error) {
+  } catch {
     redirect("/login");
   }
 
@@ -42,7 +74,7 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
-  const profile = await getProfile(userId);
+  const profile = await getProfile(userId) as ProfileData | null;
 
   if (!profile) {
     return (
@@ -50,7 +82,7 @@ export default async function ProfilePage() {
         <UserCircle className="h-20 w-20 text-muted" />
         <h2 className="text-2xl font-bold">Profile not found</h2>
         <Button asChild variant="outline">
-          <a href="/">Go Home</a>
+          <Link href="/">Go Home</Link>
         </Button>
       </div>
     );
@@ -86,12 +118,31 @@ export default async function ProfilePage() {
               </div>
 
               {/* Edit Floating Button */}
-              <button className="absolute -bottom-6 right-8 flex h-14 w-14 items-center justify-center rounded-[1.25rem] bg-linear-to-br from-primary to-primary-foreground text-white shadow-xl transition-transform hover:scale-105 active:scale-95">
+              <Link
+                href="/complete-profile"
+                className="absolute -bottom-6 right-8 flex h-14 w-14 items-center justify-center rounded-[1.25rem] bg-linear-to-br from-primary to-primary-foreground text-white shadow-xl transition-transform hover:scale-105 active:scale-95"
+              >
                 <Edit3 className="h-6 w-6" />
-              </button>
+              </Link>
             </div>
 
             <CardContent className="pt-10 pb-8 px-8">
+              {!profile.isProfileComplete ? (
+                <div className="mb-6 rounded-[1.5rem] border border-primary/15 bg-primary/8 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-base font-semibold text-foreground">Complete your profile</h2>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Add your bio, interests, and details so people can discover you properly.
+                      </p>
+                    </div>
+                    <Button asChild className="rounded-full">
+                      <Link href="/complete-profile">Complete Profile</Link>
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <h1 className="text-3xl font-black tracking-tight text-foreground">
@@ -155,7 +206,7 @@ export default async function ProfilePage() {
                   <button className="text-xs font-bold uppercase tracking-widest text-primary hover:underline">View all</button>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
-                  {profile.interestsDetails?.slice(0, 3).map((interest: any) => (
+                  {profile.interestsDetails?.slice(0, 3).map((interest) => (
                     <InterestBadge 
                       key={interest.id} 
                       name={interest.name} 
@@ -186,7 +237,7 @@ export default async function ProfilePage() {
             </div>
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {profile.memories?.map((memory: any) => (
+              {profile.memories?.map((memory) => (
                 <MemoryCard
                   key={memory.id}
                   image={memory.image}
@@ -215,7 +266,7 @@ export default async function ProfilePage() {
             </div>
             
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              {profile.event?.map((item: any) => (
+              {profile.event?.map((item) => (
                 <Card key={item.id} className="group overflow-hidden rounded-3xl border-none shadow-lg transition-all hover:scale-105 active:scale-95">
                   <div className="relative aspect-video w-full">
                     <Image src={item.image} alt="Event" fill className="object-cover" />
