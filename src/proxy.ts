@@ -9,7 +9,7 @@ const normalizeTokenRole = (role: unknown): UserRole | null => {
         return "ADMIN";
     }
 
-    if (role === "USER" || role === "PATIENT") {
+    if (role === "USER") {
         return "USER";
     }
 
@@ -27,16 +27,23 @@ export async function proxy(request: NextRequest) {
 
     let userRole: UserRole | null = null;
     if (accessToken) {
-        const verifiedToken: JwtPayload | string = jwt.verify(accessToken, process.env.JWT_SECRET as string);
+        try {
+            const verifiedToken: JwtPayload | string = jwt.verify(accessToken, process.env.JWT_SECRET as string);
 
-        if (typeof verifiedToken === "string") {
-            cookieStore.delete("accessToken");
-            cookieStore.delete("refreshToken");
-            return NextResponse.redirect(new URL('/login', request.url));
-        }
+            if (typeof verifiedToken === "string") {
+                cookieStore.delete("accessToken");
+                cookieStore.delete("refreshToken");
+                return NextResponse.redirect(new URL('/login', request.url));
+            }
 
-        userRole = normalizeTokenRole(verifiedToken.role);
-        if (!userRole) {
+            userRole = normalizeTokenRole(verifiedToken.role);
+            if (!userRole) {
+                cookieStore.delete("accessToken");
+                cookieStore.delete("refreshToken");
+                return NextResponse.redirect(new URL('/login', request.url));
+            }
+        } catch (error) {
+            console.error("JWT Verification Error in proxy:", error);
             cookieStore.delete("accessToken");
             cookieStore.delete("refreshToken");
             return NextResponse.redirect(new URL('/login', request.url));
