@@ -20,6 +20,7 @@ export default function Navbar({ user }: { user: NavbarUser }) {
     { name: "Events", href: "/events" },
     { name: "Find Friends", href: "/find-friends" },
     { name: "Messages", href: "/messages" },
+    { name: "Matches", href: "/matches" },
     { name: "Explore", href: "/services" },
     { name: "About Us", href: "/about" },
   ];
