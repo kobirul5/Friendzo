@@ -80,6 +80,7 @@ export async function createEvent(_currentState: any, formData: FormData): Promi
     }
 
     revalidatePath("/");
+    revalidatePath("/events");
     revalidatePath("/profile");
 
     return {

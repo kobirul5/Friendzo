@@ -31,13 +31,22 @@ const onlineUsers = [
   { id: "5", name: "Lamia Tasnim", handle: "@lamia", mood: "Commenting on memories" },
 ];
 
-async function fetchEvents(accessToken?: string): Promise<EventFeedItem[]> {
+type PaginatedEventsResponse = {
+  data: EventFeedItem[];
+  meta?: {
+    page: number;
+    limit: number;
+    total: number;
+  } | null;
+};
+
+async function fetchEvents(accessToken?: string, page = 1, limit = 6): Promise<PaginatedEventsResponse> {
   if (!accessToken) {
-    return [];
+    return { data: [], meta: null };
   }
 
   try {
-    const res = await fetch(`${BASE_URL}/events/all-events`, {
+    const res = await fetch(`${BASE_URL}/events/paginated?page=${page}&limit=${limit}`, {
       method: "GET",
       headers: {
         Authorization: accessToken,
@@ -47,21 +56,28 @@ async function fetchEvents(accessToken?: string): Promise<EventFeedItem[]> {
     });
 
     if (!res.ok) {
-      return [];
+      return { data: [], meta: null };
     }
 
     const result = await res.json();
-    return Array.isArray(result?.data) ? result.data : [];
+    return {
+      data: Array.isArray(result?.data) ? result.data : [],
+      meta: result?.meta ?? null,
+    };
   } catch (error) {
     console.error("Failed to fetch events:", error);
-    return [];
+    return { data: [], meta: null };
   }
 }
 
 export default async function EventsPage() {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get("accessToken")?.value;
-  const events = await fetchEvents(accessToken);
+  const eventsResponse = await fetchEvents(accessToken);
+  const events = eventsResponse.data;
+  const total = eventsResponse.meta?.total ?? events.length;
+  const limit = eventsResponse.meta?.limit ?? 6;
+  const hasMore = total > events.length;
 
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-[linear-gradient(180deg,#f6f1ea_0%,#efe6db_55%,#e8ddd1_100%)]">
@@ -138,7 +154,7 @@ export default async function EventsPage() {
               </div>
             </div>
 
-            <EventsFeedClient initialItems={events} />
+            <EventsFeedClient initialItems={events} initialHasMore={hasMore} pageSize={limit} />
           </section>
 
           <aside className="hidden xl:block">

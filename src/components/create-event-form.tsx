@@ -86,7 +86,7 @@ export default function CreateEventForm() {
 
   useEffect(() => {
     if (state?.success) {
-      router.push("/");
+      router.push("/events");
       router.refresh();
     }
   }, [router, state]);

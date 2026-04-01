@@ -1,7 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { CalendarDays, MapPin, Sparkles } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { CalendarDays, LoaderCircle, MapPin, Sparkles } from "lucide-react";
 
 type FeedUser = {
   id: string;
@@ -19,6 +20,17 @@ export type EventFeedItem = {
   createdAt: string;
   distanceInKm?: number | null;
   user?: FeedUser;
+};
+
+type PaginatedEventsClientResponse = {
+  success?: boolean;
+  message?: string;
+  data?: EventFeedItem[];
+  meta?: {
+    page: number;
+    limit: number;
+    total: number;
+  } | null;
 };
 
 function getUserName(user?: FeedUser) {
@@ -44,7 +56,94 @@ function formatDate(value?: string) {
   }).format(date);
 }
 
-export default function EventsFeedClient({ initialItems }: { initialItems: EventFeedItem[] }) {
+export default function EventsFeedClient({
+  initialItems,
+  initialHasMore,
+  pageSize,
+}: {
+  initialItems: EventFeedItem[];
+  initialHasMore: boolean;
+  pageSize: number;
+}) {
+  const [items, setItems] = useState(initialItems);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setItems(initialItems);
+    setPage(1);
+    setHasMore(initialHasMore);
+  }, [initialHasMore, initialItems]);
+
+  useEffect(() => {
+    if (!hasMore || isLoadingMore || !loadMoreRef.current) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const firstEntry = entries[0];
+
+        if (firstEntry?.isIntersecting) {
+          void loadMoreEvents();
+        }
+      },
+      { rootMargin: "300px 0px" }
+    );
+
+    observer.observe(loadMoreRef.current);
+
+    return () => observer.disconnect();
+  }, [hasMore, isLoadingMore, page]);
+
+  const loadMoreEvents = async () => {
+    if (isLoadingMore || !hasMore) {
+      return;
+    }
+
+    setIsLoadingMore(true);
+    setLoadingMessage("");
+
+    try {
+      const nextPage = page + 1;
+      const res = await fetch(`/api/events/paginated?page=${nextPage}&limit=${pageSize}`, {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      const result: PaginatedEventsClientResponse = await res.json();
+
+      if (!res.ok || !result.success) {
+        setLoadingMessage(result.message || "Failed to load more events.");
+        return;
+      }
+
+      const nextItems = Array.isArray(result.data) ? result.data : [];
+      const meta = result.meta;
+
+      setItems((current) => {
+        const currentIds = new Set(current.map((item) => item.id));
+        const merged = nextItems.filter((item) => !currentIds.has(item.id));
+        return [...current, ...merged];
+      });
+      setPage(nextPage);
+
+      if (!meta) {
+        setHasMore(nextItems.length >= pageSize);
+      } else {
+        setHasMore(meta.page * meta.limit < meta.total);
+      }
+    } catch (error) {
+      console.error("Failed to lazy load events:", error);
+      setLoadingMessage("Something went wrong while loading more events.");
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
   return (
     <section className="space-y-6">
       <div className="rounded-[2rem] border border-white/60 bg-white/80 p-6 shadow-[0_24px_70px_-46px_rgba(88,70,52,0.5)] backdrop-blur-md">
@@ -56,17 +155,17 @@ export default function EventsFeedClient({ initialItems }: { initialItems: Event
             <h2 className="mt-2 text-2xl font-semibold text-foreground">Events</h2>
           </div>
           <div className="rounded-full bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground">
-            {initialItems.length} posts
+            {items.length} posts
           </div>
         </div>
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          Nearby community events loaded from the existing backend API.
+          Nearby community events loaded from the paginated backend API with lazy loading.
         </p>
       </div>
 
-      {initialItems.length > 0 ? (
+      {items.length > 0 ? (
         <div className="space-y-6">
-          {initialItems.map((item) => {
+          {items.map((item) => {
             const userName = getUserName(item.user);
             const initials = userName
               .split(" ")
@@ -145,6 +244,25 @@ export default function EventsFeedClient({ initialItems }: { initialItems: Event
               </article>
             );
           })}
+
+          {hasMore ? (
+            <div ref={loadMoreRef} className="flex items-center justify-center py-4">
+              {isLoadingMore ? (
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-sm text-muted-foreground shadow-sm">
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                  Loading more events...
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground">Scroll to load more events</div>
+              )}
+            </div>
+          ) : null}
+
+          {loadingMessage ? (
+            <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+              {loadingMessage}
+            </div>
+          ) : null}
         </div>
       ) : (
         <div className="rounded-[2rem] border border-dashed border-primary/20 bg-white/75 px-6 py-12 text-center shadow-sm">
