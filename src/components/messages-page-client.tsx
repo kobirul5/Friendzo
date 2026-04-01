@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowUpRight,
   Circle,
+  LoaderCircle,
   MessageCircleMore,
   Phone,
   Search,
@@ -14,6 +15,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useLiveMessages, type LiveConversation } from "@/components/use-live-messages";
 
 type MessageItem = {
   id: string;
@@ -33,6 +35,12 @@ type ConversationItem = {
   unreadCount: number;
   accent: string;
   messages: MessageItem[];
+};
+
+type MessagesPageClientProps = {
+  accessToken: string | null;
+  currentUserId: string | null;
+  socketUrl: string;
 };
 
 const conversations: ConversationItem[] = [
@@ -161,34 +169,71 @@ const conversations: ConversationItem[] = [
   },
 ];
 
-export default function MessagesPageClient() {
+export default function MessagesPageClient({
+  accessToken,
+  currentUserId,
+  socketUrl,
+}: MessagesPageClientProps) {
   const [searchText, setSearchText] = useState("");
   const [selectedConversationId, setSelectedConversationId] = useState(conversations[0]?.id ?? "");
+  const [draftMessage, setDraftMessage] = useState("");
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
   const activeUsersScrollRef = useRef<HTMLDivElement | null>(null);
   const isDraggingActiveUsersRef = useRef(false);
   const dragStartXRef = useRef(0);
   const dragStartScrollLeftRef = useRef(0);
+  const fallbackLiveConversations = useMemo<LiveConversation[]>(
+    () =>
+      conversations.map((conversation) => ({
+        id: conversation.id,
+        name: conversation.name,
+        handle: conversation.handle,
+        role: conversation.role,
+        active: conversation.active,
+        lastSeen: conversation.lastSeen,
+        preview: conversation.preview,
+        unreadCount: conversation.unreadCount,
+        accent: conversation.accent,
+      })),
+    []
+  );
+  const { status: socketStatus, socket, conversations: liveConversations, messagesById } =
+    useLiveMessages({
+      accessToken,
+      currentUserId,
+      socketUrl,
+    });
 
   const filteredConversations = useMemo(() => {
     const value = searchText.trim().toLowerCase();
 
     if (!value) {
-      return conversations;
+      return liveConversations;
     }
 
-    return conversations.filter((conversation) =>
+    return liveConversations.filter((conversation) =>
       [conversation.name, conversation.handle, conversation.role, conversation.preview]
         .join(" ")
         .toLowerCase()
         .includes(value)
     );
-  }, [searchText]);
+  }, [liveConversations, searchText]);
 
   const selectedConversation =
     filteredConversations.find((conversation) => conversation.id === selectedConversationId) ??
     filteredConversations[0] ??
     null;
   const activeConversations = filteredConversations.filter((conversation) => conversation.active);
+  const selectedMessages =
+    (selectedConversationId ? messagesById[selectedConversationId] : null) ??
+    conversations.find((conversation) => conversation.id === selectedConversationId)?.messages ??
+    [];
+
+  useEffect(() => {
+    if (!selectedConversationId && filteredConversations[0]?.id) {
+      setSelectedConversationId(filteredConversations[0].id);
+    }
+  }, [filteredConversations, selectedConversationId]);
 
   const handleActiveUsersWheel = (event: React.WheelEvent<HTMLDivElement>) => {
     const container = activeUsersScrollRef.current;
@@ -241,6 +286,58 @@ export default function MessagesPageClient() {
     }
   };
 
+  const handleSendMessage = () => {
+    if (!socket || socketStatus !== "connected" || !selectedConversationId || !draftMessage.trim()) {
+      return;
+    }
+
+    setIsSendingMessage(true);
+    socket.send(
+      JSON.stringify({
+        event: "message",
+        receiverId: selectedConversationId,
+        message: draftMessage.trim(),
+        images: [],
+      })
+    );
+    setDraftMessage("");
+    setTimeout(() => setIsSendingMessage(false), 300);
+  };
+
+  useEffect(() => {
+    if (!socket || socketStatus !== "connected" || !selectedConversationId) {
+      return;
+    }
+
+    socket.send(
+      JSON.stringify({
+        event: "fetchChats",
+        receiverId: selectedConversationId,
+      })
+    );
+  }, [selectedConversationId, socket, socketStatus]);
+
+  if (!accessToken) {
+    return (
+      <main className="min-h-[calc(100vh-4rem)] bg-[radial-gradient(circle_at_top_left,#fff4e8_0%,#f6eadf_28%,#eadfd4_55%,#e0d5cb_100%)]">
+        <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-3xl items-center justify-center px-4 py-10">
+          <div className="w-full rounded-[2rem] border border-white/70 bg-white/85 p-8 text-center shadow-[0_30px_90px_-50px_rgba(88,70,52,0.42)] backdrop-blur-md">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <MessageCircleMore className="h-8 w-8" />
+            </div>
+            <h1 className="mt-5 text-2xl font-semibold text-foreground">Login required</h1>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+              Live messages use korte hole age login korte hobe.
+            </p>
+            <Button asChild className="mt-6 rounded-full px-6">
+              <Link href="/login">Go to login</Link>
+            </Button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-[radial-gradient(circle_at_top_left,#fff4e8_0%,#f6eadf_28%,#eadfd4_55%,#e0d5cb_100%)]">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-[1600px] flex-col px-4 py-5 sm:px-6 lg:px-8">
@@ -275,6 +372,27 @@ export default function MessagesPageClient() {
                     className="h-auto border-0 bg-transparent px-0 py-0 text-sm shadow-none focus-visible:ring-0"
                   />
                 </div>
+              </div>
+
+              <div className="mt-3 flex items-center justify-between px-1 text-xs text-muted-foreground">
+                <span>
+                  {socketStatus === "connected"
+                    ? "Live chat connected"
+                    : socketStatus === "connecting"
+                      ? "Connecting to socket..."
+                      : "Socket disconnected"}
+                </span>
+                <span
+                  className={`rounded-full px-2 py-1 font-semibold ${
+                    socketStatus === "connected"
+                      ? "bg-green-100 text-green-700"
+                      : socketStatus === "connecting"
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-red-100 text-red-700"
+                  }`}
+                >
+                  {socketStatus}
+                </span>
               </div>
 
               <div className="mt-4">
@@ -463,11 +581,13 @@ export default function MessagesPageClient() {
                 <div className="flex-1 bg-[linear-gradient(180deg,rgba(250,246,241,0.96),rgba(244,236,229,0.92))] p-4 sm:p-6">
                   <div className="mx-auto flex h-full max-w-4xl flex-col">
                     <div className="mb-5 rounded-[1.5rem] border border-primary/10 bg-white/75 px-4 py-3 text-sm text-muted-foreground shadow-sm">
-                      Active user stays on top, and clicking any conversation from the left side changes this chat instantly.
+                      {socketStatus === "connected"
+                        ? "Backend websocket connected. New message live update hobe."
+                        : "Socket reconnect hole live message update abar start hobe."}
                     </div>
 
                     <div className="flex-1 space-y-4 overflow-y-auto pr-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                      {selectedConversation.messages.map((message) => (
+                      {selectedMessages.map((message) => (
                         <div
                           key={message.id}
                           className={`flex ${message.sender === "me" ? "justify-end" : "justify-start"}`}
@@ -496,13 +616,29 @@ export default function MessagesPageClient() {
 
                     <div className="mt-5 rounded-[1.75rem] border border-white/70 bg-white/90 p-3 shadow-[0_20px_45px_-35px_rgba(88,70,52,0.45)]">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                        <div className="flex-1 rounded-[1.2rem] border border-border/70 bg-muted/15 px-4 py-3">
-                          <p className="text-sm text-muted-foreground">
-                            Demo composer. Next step-e eta live socket/API diye wire kora jabe.
-                          </p>
-                        </div>
-                        <Button type="button" className="h-12 rounded-full px-6 text-sm font-semibold">
-                          <Send className="h-4 w-4" />
+                        <Input
+                          value={draftMessage}
+                          onChange={(event) => setDraftMessage(event.target.value)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                              event.preventDefault();
+                              handleSendMessage();
+                            }
+                          }}
+                          placeholder="Write a live message..."
+                          className="h-12 flex-1 rounded-full border-border/70 bg-muted/15 px-5"
+                        />
+                        <Button
+                          type="button"
+                          onClick={handleSendMessage}
+                          disabled={!draftMessage.trim() || socketStatus !== "connected" || isSendingMessage}
+                          className="h-12 rounded-full px-6 text-sm font-semibold"
+                        >
+                          {isSendingMessage ? (
+                            <LoaderCircle className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Send className="h-4 w-4" />
+                          )}
                           Send message
                         </Button>
                       </div>
