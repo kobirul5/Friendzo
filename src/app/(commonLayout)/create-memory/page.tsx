@@ -12,8 +12,8 @@ export default async function CreateMemoryPage() {
   }
 
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-[radial-gradient(circle_at_top_left,rgba(231,218,204,0.85),transparent_28%),radial-gradient(circle_at_top_right,rgba(216,203,191,0.7),transparent_24%),linear-gradient(180deg,#fbf7f2_0%,#f3ede6_100%)] px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-4xl">
+    <main className="min-h-[calc(100vh-4rem)] bg-[radial-gradient(circle_at_top_left,rgba(245,235,224,0.92),transparent_22%),radial-gradient(circle_at_bottom_right,rgba(226,210,196,0.62),transparent_24%),linear-gradient(180deg,#fcfaf7_0%,#f4ece3_52%,#ecdfd2_100%)] px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+      <div className="container mx-auto max-w-5xl">
         <CreateMemoryForm />
       </div>
     </main>
