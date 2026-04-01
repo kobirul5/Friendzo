@@ -10,32 +10,22 @@ import {
   Calendar, 
   Settings, 
   Edit3, 
-  Grid, 
   Info, 
   Heart 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { MemoryCard } from "@/components/profile/memory-card";
 import { InterestBadge } from "@/components/profile/interest-badge";
+import {
+  ProfileTabs,
+  type ProfileEvent,
+  type ProfileMemory,
+} from "@/components/profile/profile-tabs";
 
 type InterestDetail = {
   id: string;
   name: string;
   image?: string | null;
-};
-
-type ProfileMemory = {
-  id: string;
-  image: string;
-  description: string;
-};
-
-type ProfileEvent = {
-  id: string;
-  image: string;
-  description: string;
-  createdAt: string;
 };
 
 type ProfileData = {
@@ -230,69 +220,14 @@ export default async function ProfilePage() {
           </Card>
         </div>
 
-        {/* Right Column: Tabbed Content & Events */}
+        {/* Right Column: Tabbed Content */}
         <div className="lg:col-span-8 space-y-10">
-          
-          {/* Main Tabs Area */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-8 border-b pb-1">
-              <button className="relative pb-4 text-lg font-black text-foreground after:absolute after:bottom-0 after:left-0 after:h-1.5 after:w-full after:rounded-full after:bg-primary">
-                Memories
-              </button>
-              <button className="relative pb-4 text-lg font-bold text-muted-foreground transition-colors hover:text-foreground">
-                Gifts
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {profile.memories?.map((memory) => (
-                <MemoryCard
-                  key={memory.id}
-                  image={memory.image}
-                  description={memory.description}
-                  userName={displayName}
-                  userAvatar={profileImage}
-                />
-              ))}
-              {(!profile.memories || profile.memories.length === 0) && (
-                <Card className="col-span-2 border-dashed bg-muted/10 p-12 text-center">
-                  <Grid className="mx-auto h-12 w-12 text-muted-foreground/30 mb-4" />
-                  <h3 className="text-lg font-semibold">No memories yet</h3>
-                  <p className="text-sm text-muted-foreground">Share your first memory with the world!</p>
-                </Card>
-              )}
-            </div>
-          </div>
-
-          {/* Events Section */}
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-black tracking-tight flex items-center gap-3">
-                Events Created
-              </h2>
-              <button className="text-sm font-bold uppercase tracking-widest text-primary hover:underline">View all</button>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              {profile.event?.map((item) => (
-                <Card key={item.id} className="group overflow-hidden rounded-3xl border-none shadow-lg transition-all hover:scale-105 active:scale-95">
-                  <div className="relative aspect-video w-full">
-                    <Image src={item.image} alt="Event" fill className="object-cover" />
-                  </div>
-                  <CardContent className="p-4">
-                    <h4 className="font-bold truncate line-clamp-1">{item.description}</h4>
-                    <p className="text-xs text-muted-foreground mt-1">{new Date(item.createdAt).toLocaleDateString()}</p>
-                  </CardContent>
-                </Card>
-              ))}
-              {(!profile.event || profile.event.length === 0) && (
-                <Card className="col-span-3 border-dashed bg-muted/10 p-8 text-center">
-                  <p className="text-sm text-muted-foreground italic">No events organized yet</p>
-                </Card>
-              )}
-            </div>
-          </div>
-
+          <ProfileTabs
+            memories={profile.memories}
+            events={profile.event}
+            displayName={displayName}
+            profileImage={profileImage}
+          />
         </div>
       </div>
     </div>
