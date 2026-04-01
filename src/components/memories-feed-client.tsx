@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import {
   Heart,
   LoaderCircle,
@@ -48,6 +48,17 @@ type LikeUser = {
   firstName?: string | null;
   lastName?: string | null;
   email?: string | null;
+};
+
+type PaginatedMemoriesClientResponse = {
+  success?: boolean;
+  message?: string;
+  data?: MemoryFeedItem[];
+  meta?: {
+    page: number;
+    limit: number;
+    total: number;
+  } | null;
 };
 
 function getUserName(user?: FeedUser | LikeUser) {
@@ -292,12 +303,21 @@ function FeedCard({
 export default function MemoriesFeedClient({
   initialItems,
   currentUserId,
+  initialHasMore,
+  pageSize,
 }: {
   initialItems: MemoryFeedItem[];
   currentUserId?: string | null;
+  initialHasMore: boolean;
+  pageSize: number;
 }) {
   const [items, setItems] = useState(initialItems);
   const [isPending, startTransition] = useTransition();
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const [likesModalOpen, setLikesModalOpen] = useState(false);
   const [selectedMemory, setSelectedMemory] = useState<MemoryFeedItem | null>(null);
   const [likedUsers, setLikedUsers] = useState<LikeUser[]>([]);
@@ -308,6 +328,33 @@ export default function MemoriesFeedClient({
   const [isCommentsLoading, setIsCommentsLoading] = useState(false);
   const [isCommentSubmitting, startCommentTransition] = useTransition();
   const [commentMessage, setCommentMessage] = useState("");
+
+  useEffect(() => {
+    setItems(initialItems);
+    setPage(1);
+    setHasMore(initialHasMore);
+  }, [initialHasMore, initialItems]);
+
+  useEffect(() => {
+    if (!hasMore || isLoadingMore || !loadMoreRef.current) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const firstEntry = entries[0];
+
+        if (firstEntry?.isIntersecting) {
+          void loadMoreMemories();
+        }
+      },
+      { rootMargin: "300px 0px" }
+    );
+
+    observer.observe(loadMoreRef.current);
+
+    return () => observer.disconnect();
+  }, [hasMore, isLoadingMore, page]);
 
   const handleToggleLike = (memoryId: string, isLiked: boolean) => {
     startTransition(async () => {
@@ -464,25 +511,70 @@ export default function MemoriesFeedClient({
     });
   };
 
+  const loadMoreMemories = async () => {
+    if (isLoadingMore || !hasMore) {
+      return;
+    }
+
+    setIsLoadingMore(true);
+    setLoadingMessage("");
+
+    try {
+      const nextPage = page + 1;
+      const res = await fetch(`/api/memories/paginated?page=${nextPage}&limit=${pageSize}`, {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      const result: PaginatedMemoriesClientResponse = await res.json();
+
+      if (!res.ok || !result.success) {
+        setLoadingMessage(result.message || "Failed to load more memories.");
+        return;
+      }
+
+      const nextItems = Array.isArray(result.data) ? result.data : [];
+      const meta = result.meta;
+
+      setItems((current) => {
+        const currentIds = new Set(current.map((item) => item.id));
+        const merged = nextItems.filter((item) => !currentIds.has(item.id));
+        return [...current, ...merged];
+      });
+      setPage(nextPage);
+
+      if (!meta) {
+        setHasMore(nextItems.length >= pageSize);
+      } else {
+        setHasMore(meta.page * meta.limit < meta.total);
+      }
+    } catch (error) {
+      console.error("Failed to lazy load memories:", error);
+      setLoadingMessage("Something went wrong while loading more memories.");
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
   return (
     <>
       <section className="space-y-6">
         <div className="rounded-[2rem] border border-white/60 bg-white/80 p-6 shadow-[0_24px_70px_-46px_rgba(88,70,52,0.5)] backdrop-blur-md">
           <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
-                Community feed
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold text-foreground">Memories</h2>
-            </div>
-            <div className="rounded-full bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground">
-              {items.length} posts
-            </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary/70">
+              Community feed
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold text-foreground">Memories</h2>
           </div>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            All community memories with image, author, likes and comments.
-          </p>
+          <div className="rounded-full bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground">
+            {items.length} posts
+          </div>
         </div>
+        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+          Community memories with image, author, likes and comments, loaded page by page.
+        </p>
+      </div>
 
         {items.length > 0 ? (
           <div className="space-y-6">
@@ -496,6 +588,25 @@ export default function MemoriesFeedClient({
                 isPending={isPending}
               />
             ))}
+
+            {hasMore ? (
+              <div ref={loadMoreRef} className="flex items-center justify-center py-4">
+                {isLoadingMore ? (
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-sm text-muted-foreground shadow-sm">
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                    Loading more memories...
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">Scroll to load more memories</div>
+                )}
+              </div>
+            ) : null}
+
+            {loadingMessage ? (
+              <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+                {loadingMessage}
+              </div>
+            ) : null}
           </div>
         ) : (
           <EmptyState />

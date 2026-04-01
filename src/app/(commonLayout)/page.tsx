@@ -33,13 +33,26 @@ const onlineUsers = [
   { id: "5", name: "Lamia Tasnim", handle: "@lamia", mood: "Commenting on memories" },
 ];
 
-async function fetchFeed<T>(path: string, accessToken?: string): Promise<T[]> {
+type PaginatedMemoriesResponse<T> = {
+  data: T[];
+  meta?: {
+    page: number;
+    limit: number;
+    total: number;
+  } | null;
+};
+
+async function fetchPaginatedMemories(
+  accessToken?: string,
+  page = 1,
+  limit = 6
+): Promise<PaginatedMemoriesResponse<MemoryFeedItem>> {
   if (!accessToken) {
-    return [];
+    return { data: [], meta: null };
   }
 
   try {
-    const res = await fetch(`${BASE_URL}${path}`, {
+    const res = await fetch(`${BASE_URL}/memories/paginated?page=${page}&limit=${limit}`, {
       method: "GET",
       headers: {
         Authorization: accessToken,
@@ -49,14 +62,17 @@ async function fetchFeed<T>(path: string, accessToken?: string): Promise<T[]> {
     });
 
     if (!res.ok) {
-      return [];
+      return { data: [], meta: null };
     }
 
     const result = await res.json();
-    return Array.isArray(result?.data) ? result.data : [];
+    return {
+      data: Array.isArray(result?.data) ? result.data : [],
+      meta: result?.meta ?? null,
+    };
   } catch (error) {
-    console.error(`Failed to fetch ${path}:`, error);
-    return [];
+    console.error("Failed to fetch paginated memories:", error);
+    return { data: [], meta: null };
   }
 }
 
@@ -74,7 +90,11 @@ export default async function Home() {
     }
   }
 
-  const memories = await fetchFeed<MemoryFeedItem>("/memories/all-memories", accessToken);
+  const memoriesResponse = await fetchPaginatedMemories(accessToken);
+  const memories = memoriesResponse.data;
+  const total = memoriesResponse.meta?.total ?? memories.length;
+  const limit = memoriesResponse.meta?.limit ?? 6;
+  const hasMore = total > memories.length;
 
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-[linear-gradient(180deg,#f6f1ea_0%,#efe6db_55%,#e8ddd1_100%)]">
@@ -166,7 +186,12 @@ export default async function Home() {
               </div>
             </div>
 
-            <MemoriesFeedClient initialItems={memories} currentUserId={currentUserId} />
+            <MemoriesFeedClient
+              initialItems={memories}
+              currentUserId={currentUserId}
+              initialHasMore={hasMore}
+              pageSize={limit}
+            />
           </section>
 
           <aside className="hidden xl:block">
