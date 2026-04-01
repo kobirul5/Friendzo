@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import Link from "next/link";
 import Script from "next/script";
@@ -61,48 +62,12 @@ type GoogleMapsGeocoder = {
   ) => void;
 };
 
-type GoogleMapInstance = {
-  setCenter: (latLng: { lat: number; lng: number }) => void;
-  setZoom: (zoom: number) => void;
-  addListener: (
-    eventName: string,
-    handler: (event: { latLng?: { lat: () => number; lng: () => number } }) => void
-  ) => void;
-};
-
-type GoogleMarkerInstance = {
-  setPosition: (latLng: { lat: number; lng: number }) => void;
-};
-
-declare global {
-  interface Window {
-    google?: {
-      maps?: {
-        Geocoder: new () => GoogleMapsGeocoder;
-        Map: new (
-          element: HTMLElement,
-          options: {
-            center: { lat: number; lng: number };
-            zoom: number;
-            disableDefaultUI?: boolean;
-            clickableIcons?: boolean;
-          }
-        ) => GoogleMapInstance;
-        Marker: new (options: {
-          position: { lat: number; lng: number };
-          map: GoogleMapInstance;
-        }) => GoogleMarkerInstance;
-      };
-    };
-  }
-}
-
 export default function CreateMemoryForm() {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(createMemory, initialState);
   const mapRef = useRef<HTMLDivElement | null>(null);
-  const googleMapRef = useRef<GoogleMapInstance | null>(null);
-  const markerRef = useRef<GoogleMarkerInstance | null>(null);
+  const googleMapRef = useRef<any>(null);
+  const markerRef = useRef<any>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [isResolvingAddress, setIsResolvingAddress] = useState(false);
   const [isGoogleReady, setIsGoogleReady] = useState(false);
@@ -113,6 +78,10 @@ export default function CreateMemoryForm() {
   const [locationMessage, setLocationMessage] = useState(
     "Search an address, use your current location, or click on the map to pick a place."
   );
+  const googleMaps =
+    typeof window !== "undefined"
+      ? (window as Window & { google?: any }).google?.maps
+      : undefined;
 
   useEffect(() => {
     if (state?.success) {
@@ -122,18 +91,18 @@ export default function CreateMemoryForm() {
   }, [router, state]);
 
   useEffect(() => {
-    if (!isGoogleReady || !mapRef.current || !window.google?.maps?.Map || googleMapRef.current) {
+    if (!isGoogleReady || !mapRef.current || !googleMaps?.Map || googleMapRef.current) {
       return;
     }
 
     const defaultCenter = { lat: 23.8103, lng: 90.4125 };
-    const map = new window.google.maps.Map(mapRef.current, {
+    const map = new googleMaps.Map(mapRef.current, {
       center: defaultCenter,
       zoom: 12,
       disableDefaultUI: false,
       clickableIcons: false,
     });
-    const marker = new window.google.maps.Marker({
+    const marker = new googleMaps.Marker({
       position: defaultCenter,
       map,
     });
@@ -141,7 +110,7 @@ export default function CreateMemoryForm() {
     googleMapRef.current = map;
     markerRef.current = marker;
 
-    map.addListener("click", (event) => {
+    map.addListener("click", (event: { latLng?: { lat: () => number; lng: () => number } }) => {
       const latLng = event.latLng;
 
       if (!latLng) {
@@ -159,7 +128,7 @@ export default function CreateMemoryForm() {
       setLocationMessage("Location selected from the map.");
       void resolveAddressFromCoordinates(lat, lng, false);
     });
-  }, [isGoogleReady]);
+  }, [googleMaps, isGoogleReady]);
 
   useEffect(() => {
     return () => {
@@ -170,18 +139,18 @@ export default function CreateMemoryForm() {
   }, [imagePreview]);
 
   const getFieldError = (fieldName: string) =>
-    state?.errors?.find((error) => error.field === fieldName)?.message ?? null;
+    state?.errors?.find((error:any) => error.field === fieldName)?.message ?? null;
 
   const geocodeWithGoogle = (request: { address?: string; location?: { lat: number; lng: number } }) =>
     new Promise<GoogleGeocodeResult[]>((resolve, reject) => {
-      if (!window.google?.maps?.Geocoder) {
+      if (!googleMaps?.Geocoder) {
         reject(new Error("Google Maps is not ready."));
         return;
       }
 
-      const geocoder = new window.google.maps.Geocoder();
+      const geocoder = new googleMaps.Geocoder();
 
-      geocoder.geocode(request, (results, status) => {
+      geocoder.geocode(request, (results:any, status:any) => {
         if (status === "OK" && results?.length) {
           resolve(results);
           return;
