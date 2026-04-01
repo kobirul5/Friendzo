@@ -103,16 +103,18 @@ export default async function FriendsPage() {
                     className="rounded-[1.8rem] border border-white/70 bg-white/88 p-5 shadow-[0_20px_50px_-40px_rgba(88,70,52,0.45)]"
                   >
                     <div className="flex items-start gap-4">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                        {initials || "F"}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h2 className="truncate text-lg font-semibold text-foreground">{name}</h2>
-                        <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-                          <MapPin className="h-4 w-4 text-primary" />
-                          <span>{friend.address || "Location not shared"}</span>
+                      <Link href={`/profile/${friend.id}`} className="flex min-w-0 flex-1 items-start gap-4">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                          {initials || "F"}
                         </div>
-                      </div>
+                        <div className="min-w-0 flex-1">
+                          <h2 className="truncate text-lg font-semibold text-foreground">{name}</h2>
+                          <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                            <MapPin className="h-4 w-4 text-primary" />
+                            <span>{friend.address || "Location not shared"}</span>
+                          </div>
+                        </div>
+                      </Link>
 
                       <Link
                         href={`/messages?friendId=${friend.id}&friendName=${encodeURIComponent(name)}`}

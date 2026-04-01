@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { MapPin } from "lucide-react";
 
 interface MatchCardProps {
@@ -23,7 +24,10 @@ export const MatchCard: React.FC<MatchCardProps> = ({ user }) => {
       : 21; // fallback
 
   return (
-    <div className="group relative aspect-[3/4] overflow-hidden rounded-[2.5rem] border-4 border-primary/40 bg-muted/20 shadow-xl transition-transform hover:-translate-y-1">
+    <Link
+      href={`/profile/${user.id}`}
+      className="group relative block aspect-[3/4] overflow-hidden rounded-[2.5rem] border-4 border-primary/40 bg-muted/20 shadow-xl transition-transform hover:-translate-y-1"
+    >
       {/* Background Image */}
       {user.profileImage ? (
         <Image
@@ -90,6 +94,6 @@ export const MatchCard: React.FC<MatchCardProps> = ({ user }) => {
           {user.address.split(",")[0] || "HANOVER"}
         </p>
       </div>
-    </div>
+    </Link>
   );
 };

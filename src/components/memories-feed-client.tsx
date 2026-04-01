@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   Heart,
@@ -64,6 +65,10 @@ type PaginatedMemoriesClientResponse = {
 function getUserName(user?: FeedUser | LikeUser) {
   const name = `${user?.firstName || ""} ${user?.lastName || ""}`.trim();
   return name || user?.email || "Friendzo user";
+}
+
+function getProfileHref(user?: { id?: string }) {
+  return user?.id ? `/profile/${user.id}` : null;
 }
 
 function formatDate(value?: string) {
@@ -142,6 +147,7 @@ function LikesModal({
           ) : likes.length > 0 ? (
             likes.map((user) => {
               const name = getUserName(user);
+              const profileHref = getProfileHref(user);
               const initials = name
                 .split(" ")
                 .filter(Boolean)
@@ -149,20 +155,30 @@ function LikesModal({
                 .map((part) => part[0]?.toUpperCase())
                 .join("");
 
+              const content = (
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                    {initials || "F"}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{name}</p>
+                    <p className="text-xs text-muted-foreground">{user.email || "Friendzo member"}</p>
+                  </div>
+                </div>
+              );
+
               return (
                 <div
                   key={user.id}
                   className="flex items-center justify-between rounded-2xl border border-border/70 bg-muted/20 px-4 py-3"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                      {initials || "F"}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">{name}</p>
-                      <p className="text-xs text-muted-foreground">{user.email || "Friendzo member"}</p>
-                    </div>
-                  </div>
+                  {profileHref ? (
+                    <Link href={profileHref} className="min-w-0 flex-1">
+                      {content}
+                    </Link>
+                  ) : (
+                    content
+                  )}
                   <Heart className="h-4 w-4 fill-primary text-primary" />
                 </div>
               );
@@ -192,6 +208,7 @@ function FeedCard({
   isPending: boolean;
 }) {
   const userName = getUserName(item.user);
+  const profileHref = getProfileHref(item.user);
   const initials = userName
     .split(" ")
     .filter(Boolean)
@@ -237,23 +254,43 @@ function FeedCard({
             </div>
 
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="flex items-center gap-3">
-                {item.user?.profileImage ? (
-                  <img
-                    src={item.user.profileImage}
-                    alt={userName}
-                    className="h-12 w-12 rounded-full border-2 border-white/60 object-cover"
-                  />
-                ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-white/60 bg-white/20 text-sm font-semibold text-white">
-                    {initials || "F"}
+              {profileHref ? (
+                <Link href={profileHref} className="flex items-center gap-3">
+                  {item.user?.profileImage ? (
+                    <img
+                      src={item.user.profileImage}
+                      alt={userName}
+                      className="h-12 w-12 rounded-full border-2 border-white/60 object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-white/60 bg-white/20 text-sm font-semibold text-white">
+                      {initials || "F"}
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-semibold text-white">{userName}</p>
+                    <p className="text-xs text-white/75">Shared with the community</p>
                   </div>
-                )}
-                <div>
-                  <p className="text-sm font-semibold text-white">{userName}</p>
-                  <p className="text-xs text-white/75">Shared with the community</p>
+                </Link>
+              ) : (
+                <div className="flex items-center gap-3">
+                  {item.user?.profileImage ? (
+                    <img
+                      src={item.user.profileImage}
+                      alt={userName}
+                      className="h-12 w-12 rounded-full border-2 border-white/60 object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-white/60 bg-white/20 text-sm font-semibold text-white">
+                      {initials || "F"}
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-semibold text-white">{userName}</p>
+                    <p className="text-xs text-white/75">Shared with the community</p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="flex flex-wrap items-center gap-3">
                 <button
@@ -686,6 +723,7 @@ export default function MemoriesFeedClient({
               ) : comments.length > 0 ? (
                 comments.map((comment) => {
                   const name = getUserName(comment.user);
+                  const profileHref = getProfileHref(comment.user);
                   const initials = name
                     .split(" ")
                     .filter(Boolean)
@@ -700,23 +738,47 @@ export default function MemoriesFeedClient({
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-start gap-3">
-                          {comment.user?.profileImage ? (
-                            <img
-                              src={comment.user.profileImage}
-                              alt={name}
-                              className="h-11 w-11 rounded-full object-cover"
-                            />
+                          {profileHref ? (
+                            <Link href={profileHref} className="flex items-start gap-3">
+                              {comment.user?.profileImage ? (
+                                <img
+                                  src={comment.user.profileImage}
+                                  alt={name}
+                                  className="h-11 w-11 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                                  {initials || "F"}
+                                </div>
+                              )}
+                              <div>
+                                <p className="text-sm font-semibold text-foreground">{name}</p>
+                                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                                  {comment.content}
+                                </p>
+                              </div>
+                            </Link>
                           ) : (
-                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                              {initials || "F"}
-                            </div>
+                            <>
+                              {comment.user?.profileImage ? (
+                                <img
+                                  src={comment.user.profileImage}
+                                  alt={name}
+                                  className="h-11 w-11 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                                  {initials || "F"}
+                                </div>
+                              )}
+                              <div>
+                                <p className="text-sm font-semibold text-foreground">{name}</p>
+                                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                                  {comment.content}
+                                </p>
+                              </div>
+                            </>
                           )}
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">{name}</p>
-                            <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                              {comment.content}
-                            </p>
-                          </div>
                         </div>
                       </div>
                       {comment.createdAt ? (

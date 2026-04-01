@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { CalendarDays, LoaderCircle, MapPin, Sparkles } from "lucide-react";
 
@@ -36,6 +37,10 @@ type PaginatedEventsClientResponse = {
 function getUserName(user?: FeedUser) {
   const name = `${user?.firstName || ""} ${user?.lastName || ""}`.trim();
   return name || user?.email || "Friendzo user";
+}
+
+function getProfileHref(user?: FeedUser) {
+  return user?.id ? `/profile/${user.id}` : null;
 }
 
 function formatDate(value?: string) {
@@ -213,23 +218,43 @@ export default function EventsFeedClient({
                       </div>
 
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                        <div className="flex items-center gap-3">
-                          {item.user?.profileImage ? (
-                            <img
-                              src={item.user.profileImage}
-                              alt={userName}
-                              className="h-12 w-12 rounded-full border-2 border-white/60 object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-white/60 bg-white/20 text-sm font-semibold text-white">
-                              {initials || "F"}
+                        {getProfileHref(item.user) ? (
+                          <Link href={getProfileHref(item.user)!} className="flex items-center gap-3">
+                            {item.user?.profileImage ? (
+                              <img
+                                src={item.user.profileImage}
+                                alt={userName}
+                                className="h-12 w-12 rounded-full border-2 border-white/60 object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-white/60 bg-white/20 text-sm font-semibold text-white">
+                                {initials || "F"}
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-sm font-semibold text-white">{userName}</p>
+                              <p className="text-xs text-white/75">Hosting this event</p>
                             </div>
-                          )}
-                          <div>
-                            <p className="text-sm font-semibold text-white">{userName}</p>
-                            <p className="text-xs text-white/75">Hosting this event</p>
+                          </Link>
+                        ) : (
+                          <div className="flex items-center gap-3">
+                            {item.user?.profileImage ? (
+                              <img
+                                src={item.user.profileImage}
+                                alt={userName}
+                                className="h-12 w-12 rounded-full border-2 border-white/60 object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-white/60 bg-white/20 text-sm font-semibold text-white">
+                                {initials || "F"}
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-sm font-semibold text-white">{userName}</p>
+                              <p className="text-xs text-white/75">Hosting this event</p>
+                            </div>
                           </div>
-                        </div>
+                        )}
 
                         <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-3 text-sm text-white backdrop-blur-md">
                           <CalendarDays className="h-4 w-4" />
