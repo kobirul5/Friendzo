@@ -8,11 +8,12 @@ import {
   LoaderCircle,
   MapPin,
   MessageCircleMore,
+  Search,
   Users,
 } from "lucide-react";
 import { FindFriendRequestButton } from "@/components/find-friend-request-button";
 
-type SidebarTab = "friends" | "suggestions" | "requests";
+type SidebarTab = "friends" | "discover" | "suggestions" | "requests";
 
 type NetworkUser = {
   id: string;
@@ -51,6 +52,7 @@ const tabs: {
   endpoint: string;
 }[] = [
   { key: "friends", label: "All Friends", icon: Users, endpoint: "/api/network/friends" },
+  { key: "discover", label: "Find Friend", icon: Search, endpoint: "/api/network/discover" },
   { key: "suggestions", label: "Suggestions", icon: Lightbulb, endpoint: "/api/network/suggestions" },
   { key: "requests", label: "New Requests", icon: Bell, endpoint: "/api/network/requests" },
 ];
@@ -151,6 +153,7 @@ export default function FriendsNetworkBrowser({
   }, [activeTab]);
 
   const selectedTab = tabs.find((tab) => tab.key === activeTab) ?? tabs[0];
+  const SelectedIcon = selectedTab.icon;
 
   return (
     <div className="mx-auto grid max-w-7xl gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
@@ -198,7 +201,7 @@ export default function FriendsNetworkBrowser({
             </div>
 
             <div className="flex items-center gap-3 rounded-full border border-border/70 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
-              <selectedTab.icon className="h-4 w-4" />
+              <SelectedIcon className="h-4 w-4" />
               <span>{users.length} users found</span>
             </div>
           </div>
@@ -214,7 +217,7 @@ export default function FriendsNetworkBrowser({
             {users.map((user) => {
               const name = getUserName(user);
               const initials = getInitials(name);
-              const isSuggestions = activeTab === "suggestions";
+              const isSuggestions = activeTab === "suggestions" || activeTab === "discover";
               const showMessage = activeTab === "friends";
 
               return (
@@ -284,7 +287,7 @@ export default function FriendsNetworkBrowser({
           </section>
         ) : (
           <section className="rounded-[2rem] border border-dashed border-border/70 bg-white/80 p-10 text-center">
-            <selectedTab.icon className="mx-auto h-10 w-10 text-primary" />
+            <SelectedIcon className="mx-auto h-10 w-10 text-primary" />
             <h2 className="mt-4 text-xl font-semibold text-foreground">
               No {selectedTab.label.toLowerCase()} found
             </h2>
