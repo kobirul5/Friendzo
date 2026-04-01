@@ -72,7 +72,7 @@ export default function CompleteProfileForm({
   }, [profile.profileImage]);
 
   const getFieldError = (fieldName: string) =>
-    state?.errors?.find((error) => error.field === fieldName)?.message ?? null;
+    state?.errors?.find((error:any) => error.field === fieldName)?.message ?? null;
 
   const toggleInterest = (interestName: string) => {
     setSelectedInterests((current) =>

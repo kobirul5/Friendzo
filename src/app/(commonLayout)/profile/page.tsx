@@ -1,6 +1,6 @@
 import { getProfile } from "@/services/user/profile-service";
 import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import Image from "next/image";
@@ -62,9 +62,13 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
-  let decoded: { id?: string } | null = null;
+  let decoded: (JwtPayload & { id?: string }) | null = null;
   try {
-    decoded = jwt.decode(accessToken);
+    const tokenPayload = jwt.decode(accessToken);
+    decoded =
+      tokenPayload && typeof tokenPayload !== "string"
+        ? (tokenPayload as JwtPayload & { id?: string })
+        : null;
   } catch {
     redirect("/login");
   }
@@ -88,6 +92,10 @@ export default async function ProfilePage() {
     );
   }
 
+  const displayName =
+    [profile.firstName, profile.lastName].filter(Boolean).join(" ").trim() || "User";
+  const profileImage = profile.profileImage || undefined;
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 md:py-12">
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
@@ -100,7 +108,7 @@ export default async function ProfilePage() {
               {profile.profileImage ? (
                 <Image
                   src={profile.profileImage}
-                  alt={profile.firstName}
+                  alt={displayName}
                   fill
                   className="object-cover"
                 />
@@ -146,7 +154,7 @@ export default async function ProfilePage() {
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <h1 className="text-3xl font-black tracking-tight text-foreground">
-                    {profile.firstName} {profile.lastName}
+                    {displayName}
                   </h1>
                 </div>
 
@@ -210,7 +218,7 @@ export default async function ProfilePage() {
                     <InterestBadge 
                       key={interest.id} 
                       name={interest.name} 
-                      image={interest.image} 
+                      image={interest.image || undefined} 
                     />
                   ))}
                   {(!profile.interestsDetails || profile.interestsDetails.length === 0) && (
@@ -242,8 +250,8 @@ export default async function ProfilePage() {
                   key={memory.id}
                   image={memory.image}
                   description={memory.description}
-                  userName={profile.firstName}
-                  userAvatar={profile.profileImage}
+                  userName={displayName}
+                  userAvatar={profileImage}
                 />
               ))}
               {(!profile.memories || profile.memories.length === 0) && (
