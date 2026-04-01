@@ -23,6 +23,7 @@ const sidebarLinks = [
   { name: "Events", href: "/events", icon: CalendarDays },
   { name: "Explore", href: "/services", icon: Compass },
   { name: "About Us", href: "/about", icon: Info },
+  { name: "Friends", href: "/friends", icon: Info },
 ];
 
 const onlineUsers = [

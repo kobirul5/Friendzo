@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { Search, MapPin, Users } from "lucide-react";
+import { FindFriendRequestButton } from "@/components/find-friend-request-button";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
@@ -60,7 +61,7 @@ export default async function FindFriendsPage() {
                   Find friends around you
                 </h1>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-                  Navbar থেকে direct open করার জন্য এই page-এ backend users list show করছে।
+                  This page opens directly from the navbar and shows users from the backend.
                 </p>
               </div>
 
@@ -76,7 +77,7 @@ export default async function FindFriendsPage() {
               <Users className="mx-auto h-10 w-10 text-primary" />
               <h2 className="mt-4 text-xl font-semibold text-foreground">Login required</h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Find Friends page দেখতে login করতে হবে।
+                Please log in to view the Find Friends page.
               </p>
               <Link
                 href="/login"
@@ -86,8 +87,8 @@ export default async function FindFriendsPage() {
               </Link>
             </section>
           ) : users.length ? (
-            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {users.map((user) => {
+            <section className="grid gap-4 grid-cols-1">
+              {users.map((user: any) => {
                 const name = [user.firstName, user.lastName].filter(Boolean).join(" ").trim() || "Unknown user";
                 const initials = name
                   .split(" ")
@@ -99,40 +100,47 @@ export default async function FindFriendsPage() {
                 return (
                   <article
                     key={user.id}
-                    className="rounded-[1.8rem] border border-white/70 bg-white/88 p-5 shadow-[0_20px_50px_-40px_rgba(88,70,52,0.45)]"
+                    className="rounded-[1.8rem] flex justify-between border border-white/70 bg-white/88 p-5 shadow-[0_20px_50px_-40px_rgba(88,70,52,0.45)]"
                   >
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                        {initials || "F"}
+                    <div className="">
+                      <div className="flex items-start gap-4">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                          {initials || "F"}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h2 className="truncate text-lg font-semibold text-foreground">{name}</h2>
+                          <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <h2 className="truncate text-lg font-semibold text-foreground">{name}</h2>
-                        <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+
+                      <div className="mt-4 space-y-3 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-primary" />
+                          <span>{user.address || "Location not shared"}</span>
+                        </div>
+                       
                       </div>
                     </div>
+                    <div>
 
-                    <div className="mt-4 space-y-3 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-primary" />
-                        <span>{user.address || "Location not shared"}</span>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {(user.interests || []).slice(0, 4).map((interest: any) => (
+                          <span
+                            key={interest}
+                            className="rounded-full bg-primary/8 px-3 py-1 text-xs font-medium text-foreground"
+                          >
+                            {interest}
+                          </span>
+                        ))}
                       </div>
-                      <p>
-                        Distance:{" "}
-                        <span className="font-medium text-foreground">
-                          {typeof user.distanceInKm === "number" ? `${user.distanceInKm} km` : "Unknown"}
-                        </span>
-                      </p>
-                    </div>
 
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {(user.interests || []).slice(0, 4).map((interest) => (
-                        <span
-                          key={interest}
-                          className="rounded-full bg-primary/8 px-3 py-1 text-xs font-medium text-foreground"
-                        >
-                          {interest}
-                        </span>
-                      ))}
+                      <FindFriendRequestButton userId={user.id} />
+                       <p>
+                          Distance:{" "}
+                          <span className="font-medium text-foreground">
+                            {typeof user.distanceInKm === "number" ? `${user.distanceInKm} km` : "Unknown"}
+                          </span>
+                        </p>
                     </div>
                   </article>
                 );
@@ -143,7 +151,7 @@ export default async function FindFriendsPage() {
               <Users className="mx-auto h-10 w-10 text-primary" />
               <h2 className="mt-4 text-xl font-semibold text-foreground">No users found</h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Backend থেকে এখনো কোনো discover user আসেনি।
+                No discover users were returned from the backend yet.
               </p>
             </section>
           )}

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowUpRight,
   Circle,
@@ -15,7 +16,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useLiveMessages, type LiveConversation } from "@/components/use-live-messages";
+import { useLiveMessages } from "@/components/use-live-messages";
 
 type MessageItem = {
   id: string;
@@ -174,35 +175,23 @@ export default function MessagesPageClient({
   currentUserId,
   socketUrl,
 }: MessagesPageClientProps) {
+  const searchParams = useSearchParams();
   const [searchText, setSearchText] = useState("");
-  const [selectedConversationId, setSelectedConversationId] = useState(conversations[0]?.id ?? "");
+  const [selectedConversationId, setSelectedConversationId] = useState("");
   const [draftMessage, setDraftMessage] = useState("");
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const activeUsersScrollRef = useRef<HTMLDivElement | null>(null);
   const isDraggingActiveUsersRef = useRef(false);
   const dragStartXRef = useRef(0);
   const dragStartScrollLeftRef = useRef(0);
-  const fallbackLiveConversations = useMemo<LiveConversation[]>(
-    () =>
-      conversations.map((conversation) => ({
-        id: conversation.id,
-        name: conversation.name,
-        handle: conversation.handle,
-        role: conversation.role,
-        active: conversation.active,
-        lastSeen: conversation.lastSeen,
-        preview: conversation.preview,
-        unreadCount: conversation.unreadCount,
-        accent: conversation.accent,
-      })),
-    []
-  );
   const { status: socketStatus, socket, conversations: liveConversations, messagesById } =
     useLiveMessages({
       accessToken,
       currentUserId,
       socketUrl,
     });
+  const requestedConversationId = searchParams.get("friendId") || "";
+  const requestedConversationName = searchParams.get("friendName") || "New friend";
 
   const filteredConversations = useMemo(() => {
     const value = searchText.trim().toLowerCase();
@@ -219,21 +208,39 @@ export default function MessagesPageClient({
     );
   }, [liveConversations, searchText]);
 
+  const requestedConversation =
+    requestedConversationId && selectedConversationId === requestedConversationId
+      ? {
+          id: requestedConversationId,
+          name: requestedConversationName,
+          handle: requestedConversationId ? `@${requestedConversationId.slice(-6)}` : "@friendzo",
+          role: "Friendzo chat",
+          active: false,
+          lastSeen: "Start a new conversation",
+          preview: "Send a message to start chatting",
+          unreadCount: 0,
+          accent: "from-sky-300 via-cyan-200 to-blue-100",
+        }
+      : null;
+
   const selectedConversation =
     filteredConversations.find((conversation) => conversation.id === selectedConversationId) ??
+    requestedConversation ??
     filteredConversations[0] ??
     null;
   const activeConversations = filteredConversations.filter((conversation) => conversation.active);
-  const selectedMessages =
-    (selectedConversationId ? messagesById[selectedConversationId] : null) ??
-    conversations.find((conversation) => conversation.id === selectedConversationId)?.messages ??
-    [];
+  const selectedMessages = (selectedConversationId ? messagesById[selectedConversationId] : null) ?? [];
 
   useEffect(() => {
+    if (requestedConversationId) {
+      setSelectedConversationId(requestedConversationId);
+      return;
+    }
+
     if (!selectedConversationId && filteredConversations[0]?.id) {
       setSelectedConversationId(filteredConversations[0].id);
     }
-  }, [filteredConversations, selectedConversationId]);
+  }, [filteredConversations, requestedConversationId, selectedConversationId]);
 
   const handleActiveUsersWheel = (event: React.WheelEvent<HTMLDivElement>) => {
     const container = activeUsersScrollRef.current;
@@ -327,7 +334,7 @@ export default function MessagesPageClient({
             </div>
             <h1 className="mt-5 text-2xl font-semibold text-foreground">Login required</h1>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              Live messages use korte hole age login korte hobe.
+              Please log in to use live messaging.
             </p>
             <Button asChild className="mt-6 rounded-full px-6">
               <Link href="/login">Go to login</Link>
@@ -582,36 +589,42 @@ export default function MessagesPageClient({
                   <div className="mx-auto flex h-full max-w-4xl flex-col">
                     <div className="mb-5 rounded-[1.5rem] border border-primary/10 bg-white/75 px-4 py-3 text-sm text-muted-foreground shadow-sm">
                       {socketStatus === "connected"
-                        ? "Backend websocket connected. New message live update hobe."
-                        : "Socket reconnect hole live message update abar start hobe."}
+                        ? "Backend WebSocket connected. New messages will appear live."
+                        : "Live updates will resume when the socket reconnects."}
                     </div>
 
                     <div className="flex-1 space-y-4 overflow-y-auto pr-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                      {selectedMessages.map((message) => (
-                        <div
-                          key={message.id}
-                          className={`flex ${message.sender === "me" ? "justify-end" : "justify-start"}`}
-                        >
+                      {selectedMessages.length ? (
+                        selectedMessages.map((message) => (
                           <div
-                            className={`max-w-[85%] rounded-[1.6rem] px-4 py-3 shadow-sm sm:max-w-[70%] ${
-                              message.sender === "me"
-                                ? "bg-primary text-primary-foreground"
-                                : "border border-white/70 bg-white text-foreground"
-                            }`}
+                            key={message.id}
+                            className={`flex ${message.sender === "me" ? "justify-end" : "justify-start"}`}
                           >
-                            <p className="text-sm leading-6">{message.text}</p>
-                            <p
-                              className={`mt-2 text-[11px] font-medium ${
+                            <div
+                              className={`max-w-[85%] rounded-[1.6rem] px-4 py-3 shadow-sm sm:max-w-[70%] ${
                                 message.sender === "me"
-                                  ? "text-primary-foreground/80"
-                                  : "text-muted-foreground"
+                                  ? "bg-primary text-primary-foreground"
+                                  : "border border-white/70 bg-white text-foreground"
                               }`}
                             >
-                              {message.time}
-                            </p>
+                              <p className="text-sm leading-6">{message.text}</p>
+                              <p
+                                className={`mt-2 text-[11px] font-medium ${
+                                  message.sender === "me"
+                                    ? "text-primary-foreground/80"
+                                    : "text-muted-foreground"
+                                }`}
+                              >
+                                {message.time}
+                              </p>
+                            </div>
                           </div>
+                        ))
+                      ) : (
+                        <div className="flex h-full min-h-[220px] items-center justify-center rounded-[1.6rem] border border-dashed border-border/70 bg-white/70 p-6 text-center text-sm text-muted-foreground">
+                          No messages yet. Send the first message to start this conversation.
                         </div>
-                      ))}
+                      )}
                     </div>
 
                     <div className="mt-5 rounded-[1.75rem] border border-white/70 bg-white/90 p-3 shadow-[0_20px_45px_-35px_rgba(88,70,52,0.45)]">
@@ -656,7 +669,7 @@ export default function MessagesPageClient({
                     Pick a conversation
                   </h2>
                   <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                    Left side theke jekono active user select korle ekhane full conversation dekhabe.
+                    Select any active user from the left to open the full conversation here.
                   </p>
                 </div>
               </div>
