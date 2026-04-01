@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
+import type { ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Check, ImagePlus, LoaderCircle, Sparkles } from "lucide-react";
 
@@ -56,6 +57,8 @@ export default function CompleteProfileForm({
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(completeProfile, initialState);
   const [selectedInterests, setSelectedInterests] = useState<string[]>(profile.interests || []);
+  const [imagePreview, setImagePreview] = useState<string | null>(profile.profileImage || null);
+  const [selectedImageName, setSelectedImageName] = useState<string>("");
 
   useEffect(() => {
     if (state?.success) {
@@ -63,6 +66,10 @@ export default function CompleteProfileForm({
       router.refresh();
     }
   }, [router, state]);
+
+  useEffect(() => {
+    setImagePreview(profile.profileImage || null);
+  }, [profile.profileImage]);
 
   const getFieldError = (fieldName: string) =>
     state?.errors?.find((error) => error.field === fieldName)?.message ?? null;
@@ -74,6 +81,28 @@ export default function CompleteProfileForm({
         : [...current, interestName]
     );
   };
+
+  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    setSelectedImageName(file?.name || "");
+
+    setImagePreview((current) => {
+      if (current?.startsWith("blob:")) {
+        URL.revokeObjectURL(current);
+      }
+
+      return file ? URL.createObjectURL(file) : profile.profileImage || null;
+    });
+  };
+
+  useEffect(() => {
+    return () => {
+      if (imagePreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   return (
     <div className="rounded-[2rem] border border-white/60 bg-white/80 p-6 shadow-[0_24px_80px_-44px_rgba(88,70,52,0.38)] backdrop-blur-md sm:p-8">
@@ -105,17 +134,33 @@ export default function CompleteProfileForm({
             <FieldLabel>Profile image</FieldLabel>
             <FieldContent>
               <label className="flex cursor-pointer flex-col items-center justify-center rounded-[1.5rem] border border-dashed border-primary/25 bg-primary/5 px-6 py-10 text-center transition-colors hover:border-primary/40 hover:bg-primary/10">
-                <ImagePlus className="mb-3 h-8 w-8 text-primary" />
+                {imagePreview ? (
+                  <div className="mb-4 overflow-hidden rounded-[1.5rem] border border-white/70 shadow-sm">
+                    <img
+                      src={imagePreview}
+                      alt="Selected profile preview"
+                      className="h-36 w-36 object-cover"
+                    />
+                  </div>
+                ) : (
+                  <ImagePlus className="mb-3 h-8 w-8 text-primary" />
+                )}
                 <span className="text-sm font-semibold text-foreground">Choose a profile image</span>
                 <span className="mt-1 text-sm text-muted-foreground">
                   Optional, but it helps your profile stand out.
                 </span>
+                {selectedImageName ? (
+                  <span className="mt-3 rounded-full bg-white px-3 py-1 text-xs font-medium text-foreground shadow-sm">
+                    {selectedImageName}
+                  </span>
+                ) : null}
                 <Input
                   name="profileImage"
                   type="file"
                   accept="image/*"
                   className="sr-only"
                   disabled={isPending}
+                  onChange={handleImageChange}
                 />
               </label>
               <FieldDescription>Leave empty if you want to keep the current image.</FieldDescription>

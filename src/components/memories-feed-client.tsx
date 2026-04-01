@@ -24,7 +24,7 @@ import {
 import { getMemoryLikeStats, likeMemory, unlikeMemory } from "@/services/memory-like";
 
 type FeedUser = {
-  id: string;
+  id?: string;
   firstName?: string | null;
   lastName?: string | null;
   email?: string | null;
@@ -44,7 +44,7 @@ export type MemoryFeedItem = {
 };
 
 type LikeUser = {
-  id: string;
+  id?: string;
   firstName?: string | null;
   lastName?: string | null;
   email?: string | null;
@@ -190,17 +190,19 @@ function FeedCard({
 
   return (
     <article className="overflow-hidden rounded-[2rem] border border-white/70 bg-white shadow-[0_24px_80px_-42px_rgba(88,70,52,0.45)]">
-      <div className="relative min-h-[360px] bg-[linear-gradient(160deg,rgba(92,78,63,0.08),rgba(232,220,209,0.55))]">
+      <div className="relative bg-[linear-gradient(160deg,rgba(92,78,63,0.08),rgba(232,220,209,0.55))]">
         {item.image ? (
           <img
             src={item.image}
             alt={item.description || "Memory cover"}
-            className="absolute inset-0 h-full w-full object-cover"
+            className="block max-h-[75vh] w-full object-cover"
           />
-        ) : null}
+        ) : (
+          <div className="min-h-[360px] w-full" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-white/10" />
 
-        <div className="relative flex h-full min-h-[360px] flex-col justify-between p-6">
+        <div className="absolute inset-0 flex flex-col justify-between p-7">
           <div className="flex items-start justify-between gap-4">
             <span className="rounded-full bg-white/18 px-4 py-2 text-sm font-semibold text-white backdrop-blur-md">
               {formatDate(item.createdAt)}

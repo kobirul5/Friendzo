@@ -42,7 +42,7 @@ export default async function EventsPage() {
 
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-[radial-gradient(circle_at_top_left,rgba(231,218,204,0.85),transparent_28%),radial-gradient(circle_at_top_right,rgba(216,203,191,0.7),transparent_24%),linear-gradient(180deg,#fbf7f2_0%,#f3ede6_100%)]">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
+      <div className="container mx-auto px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
         <section className="overflow-hidden rounded-[2.2rem] border border-white/60 bg-white/55 p-6 shadow-[0_24px_80px_-44px_rgba(88,70,52,0.45)] backdrop-blur-md sm:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
