@@ -20,51 +20,51 @@ export default function Navbar({ user }: { user: NavbarUser }) {
     { name: "Events", href: "/events" },
     { name: "Find Friends", href: "/find-friends" },
     { name: "Messages", href: "/messages" },
-    { name: "Matches", href: "/matches" },
-    { name: "Explore", href: "/services" },
-    { name: "About Us", href: "/about" },
+    { name: "Matches", href: "/matches" }
   ];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+      <div className="container mx-auto flex h-16 items-center justify-between gap-4 px-4 md:grid md:grid-cols-[auto_1fr_auto] md:justify-normal">
         {/* Logo */}
-        <div className="flex justify-between gap-15 "> 
+        <div className="flex min-w-0 items-center"> 
 
         <Link href="/" className="flex items-center gap-2">
           <Image src="/assets/logo.png" alt="Friendzo Logo" width={100} height={40} className="h-10 w-auto" />
           <span className="text-lg font-semibold text-primary">Friendzo</span>
         </Link>
-
-        <div className="hidden md:flex w-full max-w-xs items-center">
-          <div className="flex w-full items-center gap-3 rounded-full border border-border/70 bg-white/75 px-4 py-2 shadow-sm">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search people, events..."
-              className="h-auto border-0 bg-transparent px-0 py-0 shadow-none focus-visible:ring-0"
-            />
-          </div>
-        </div>
         </div>
 
 
         {/* Desktop Nav */}
-        <nav className="hidden items-center gap-6 md:flex">
-          {navItems.map((item) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              className="text-sm font-medium hover:text-primary transition-colors"
-            >
-              {item.name}
-            </Link>
-          ))}
-        </nav>
+        <div className="hidden min-w-0 items-center justify-center gap-6 md:flex">
+          <nav className="flex items-center gap-6">
+            {navItems.map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className="text-sm font-medium hover:text-primary transition-colors"
+              >
+                {item.name}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="w-full max-w-xs items-center">
+            <div className="flex w-full items-center gap-3 rounded-full border border-border/70 bg-white/75 px-4 py-2 shadow-sm">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search people, events..."
+                className="h-auto border-0 bg-transparent px-0 py-0 shadow-none focus-visible:ring-0"
+              />
+            </div>
+          </div>
+        </div>
 
 
         {/* Actions */}
-        <div className="hidden items-center gap-4 md:flex">
+        <div className="hidden items-center justify-self-end gap-4 md:flex">
           {!user ? (
             <>
               <Button variant="ghost" asChild>
@@ -95,7 +95,7 @@ export default function Navbar({ user }: { user: NavbarUser }) {
 
         {/* Mobile Menu */}
         <Sheet>
-          <SheetTrigger className="md:hidden" aria-label="Open Menu">
+          <SheetTrigger className="shrink-0 md:hidden" aria-label="Open Menu">
             <Menu className="h-6 w-6" />
           </SheetTrigger>
           <SheetContent suppressHydrationWarning side="right" className="w-72">
