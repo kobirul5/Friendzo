@@ -14,7 +14,7 @@ import {
 const sidebarLinks = [
   { name: "Home", href: "/", icon: HomeIcon },
   { name: "Events", href: "/events", icon: CalendarDays },
-  { name: "Explore", href: "/services", icon: Compass },
+  { name: "Explore", href: "/explore", icon: Compass },
   { name: "About Us", href: "/about", icon: Info },
 ];
 

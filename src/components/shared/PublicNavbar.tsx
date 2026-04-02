@@ -18,7 +18,7 @@ export default function Navbar({ user }: { user: NavbarUser }) {
   const navItems = [
     { name: "Home", href: "/" },
     { name: "Events", href: "/events" },
-    { name: "Find Friends", href: "/find-friends" },
+    { name: "Explore", href: "/explore" },
     { name: "Messages", href: "/messages" },
     { name: "Matches", href: "/matches" }
   ];

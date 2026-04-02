@@ -1,42 +1,47 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
-import {
-  CalendarDays,
-  ChevronRight,
-  Compass,
-  HeartHandshake,
-  Home as HomeIcon,
-  ImagePlus,
-  Info,
-} from "lucide-react";
+import { CalendarDays, ChevronRight, Compass, HeartHandshake, Home as HomeIcon, Info } from "lucide-react";
 
-import MatchesFeedClient from "@/components/modules/Matches/MatchesFeedClient";
 import ContactsSidebar from "@/components/shared/contacts-sidebar";
+import DiscoverExperienceClient from "@/components/shared/discover-experience-client";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
 const sidebarLinks = [
   { name: "Home", href: "/", icon: HomeIcon },
   { name: "Events", href: "/events", icon: CalendarDays },
-  { name: "Explore", href: "/explore", icon: Compass },
+  { name: "Explore", href: "/explore", icon: Compass, active: true },
   { name: "About Us", href: "/about", icon: Info },
-  { name: "Friends", href: "/friends", icon: Info },
+  { name: "Friends", href: "/friends", icon: HeartHandshake },
 ];
 
-type MatchUser = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  profileImage?: string | null;
-  dob: string | number;
-  address: string;
-  interestPercentage: number;
-  distanceKm: number;
+type InterestItem = {
+  name: string;
+  image?: string | null;
 };
 
-export default async function MatchesPage() {
+async function getAllInterests(): Promise<InterestItem[]> {
+  try {
+    const res = await fetch(`${BASE_URL}/discoverByInterest/all-interest`, {
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      return [];
+    }
+
+    const result = await res.json();
+    return Array.isArray(result?.data) ? result.data : [];
+  } catch (error) {
+    console.error("Failed to fetch discover interests:", error);
+    return [];
+  }
+}
+
+export default async function ExplorePage() {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get("accessToken")?.value;
+  const interests = await getAllInterests();
 
   if (!accessToken) {
     return (
@@ -46,12 +51,12 @@ export default async function MatchesPage() {
             <aside className="hidden xl:block" />
             <section className="min-w-0">
               <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/85 p-8 text-center shadow-[0_20px_60px_-40px_rgba(88,70,52,0.45)] backdrop-blur-md">
-                <HeartHandshake className="mx-auto h-12 w-12 text-primary" />
+                <Compass className="mx-auto h-12 w-12 text-primary" />
                 <h1 className="mt-4 text-2xl font-semibold text-foreground">
-                  Please login to see your matches
+                  Please login to explore people
                 </h1>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Find friends with similar interests from your profile.
+                  Browse similar interests, nearby profiles, and today&apos;s buzz after signing in.
                 </p>
                 <Link
                   href="/login"
@@ -66,27 +71,6 @@ export default async function MatchesPage() {
         </div>
       </main>
     );
-  }
-
-  const pageSize = 10;
-  let matches: MatchUser[] = [];
-  let total = 0;
-
-  try {
-    const res = await fetch(`${BASE_URL}/discoverByInterest/match?page=1&limit=${pageSize}`, {
-      headers: {
-        Authorization: accessToken,
-      },
-      cache: "no-store",
-    });
-
-    if (res.ok) {
-      const result = await res.json();
-      matches = Array.isArray(result?.data) ? result.data : [];
-      total = result?.meta?.total || 0;
-    }
-  } catch (error) {
-    console.error("Error fetching initial matches:", error);
   }
 
   return (
@@ -107,7 +91,11 @@ export default async function MatchesPage() {
                       <Link
                         key={item.name}
                         href={item.href}
-                        className="flex items-center justify-between rounded-2xl bg-muted/30 px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-primary/8"
+                        className={`flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition-colors ${
+                          item.active
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted/30 text-foreground hover:bg-primary/8"
+                        }`}
                       >
                         <span className="flex items-center gap-3">
                           <Icon className="h-4 w-4" />
@@ -119,35 +107,16 @@ export default async function MatchesPage() {
                   })}
                 </div>
               </div>
-
-              <div className="rounded-[2rem] border border-white/65 bg-white/80 p-5 shadow-[0_20px_60px_-40px_rgba(88,70,52,0.45)] backdrop-blur-md">
-                <p className="text-sm font-semibold text-foreground">Quick action</p>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Keep your profile updated so your match quality gets better over time.
-                </p>
-                <Link
-                  href="/complete-profile"
-                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5"
-                >
-                  <ImagePlus className="h-4 w-4" />
-                  Update profile
-                </Link>
-              </div>
             </div>
           </aside>
 
-          <section className="min-w-0 space-y-6">
-            <MatchesFeedClient
-              initialItems={matches}
-              initialTotal={total}
-              pageSize={pageSize}
-              accessToken={accessToken}
-            />
+          <section className="min-w-0">
+            <DiscoverExperienceClient interests={interests} />
           </section>
 
           <ContactsSidebar
-            title="Match sidebar"
-            description="This page now follows the same overall layout pattern as the home page for a more consistent experience."
+            title="Explore mode"
+            description="Switch between similar interests, nearby people, and today&apos;s buzz without leaving the page."
           />
         </div>
       </div>

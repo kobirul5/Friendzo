@@ -14,20 +14,18 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const searchParams = request.nextUrl.searchParams;
+  const params = new URLSearchParams();
+
+  ["interest", "page", "limit"].forEach((key) => {
+    const value = searchParams.get(key);
+    if (value) {
+      params.set(key, value);
+    }
+  });
+
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const params = new URLSearchParams();
-
-    ["lat", "lng", "radiusKm", "search", "gender", "minDistance", "maxDistance"].forEach((key) => {
-      const value = searchParams.get(key);
-      if (value) {
-        params.set(key, value);
-      }
-    });
-
-    const querySuffix = params.toString() ? `?${params.toString()}` : "";
-
-    const res = await fetch(`${BASE_URL}/discoverByInterest${querySuffix}`, {
+    const res = await fetch(`${BASE_URL}/discoverByInterest/match?${params.toString()}`, {
       headers: {
         Authorization: accessToken,
         "Content-Type": "application/json",
@@ -38,9 +36,9 @@ export async function GET(request: NextRequest) {
     const result = await res.json();
     return NextResponse.json(result, { status: res.status });
   } catch (error) {
-    console.error("Failed to load discover users:", error);
+    console.error("Failed to load discover matches:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to load discover users.", data: [] },
+      { success: false, message: "Failed to load discover matches.", data: [] },
       { status: 500 }
     );
   }

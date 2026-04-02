@@ -19,7 +19,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v
 const sidebarLinks = [
   { name: "Home", href: "/", icon: HomeIcon },
   { name: "Events", href: "/events", icon: CalendarDays, active: true },
-  { name: "Explore", href: "/services", icon: Compass },
+  { name: "Explore", href: "/explore", icon: Compass },
   { name: "About Us", href: "/about", icon: Info },
 ];
 
