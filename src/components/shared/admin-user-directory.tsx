@@ -260,7 +260,7 @@ export default function AdminUserDirectory({
                       <td className="px-4 py-4">
                         <div className="flex justify-end gap-2">
                           <Link
-                            href={`/admin/dashboard/my-profile?id=${user.id}`}
+                            href={`/admin/dashboard/users/profile/${user.id}`}
                             className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/8 text-primary transition hover:bg-primary/14"
                             title="View profile"
                             aria-label="View profile"
@@ -323,6 +323,6 @@ export default function AdminUserDirectory({
         </div>
       ) : null}
 
-    </div>
+   </div>
   );
 }
