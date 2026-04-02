@@ -14,9 +14,23 @@ import {
   ShieldBan,
   Users,
   WalletCards,
+  type LucideIcon,
 } from "lucide-react";
 
-const navSections = [
+type NavItem = {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+  indent?: boolean;
+  activeFor?: string[];
+};
+
+type NavSection = {
+  title: string;
+  items: NavItem[];
+};
+
+const navSections: NavSection[] = [
   {
     title: "Overview",
     items: [{ label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard }],
@@ -55,7 +69,12 @@ const navSections = [
 ];
 
 function isActivePath(pathname: string, href: string, activeFor?: string[]) {
-  if (pathname === href || pathname.startsWith(`${href}/`)) return true;
+  if (pathname === href) return true;
+
+  if (href !== "/admin/dashboard" && pathname.startsWith(`${href}/`)) {
+    return true;
+  }
+
   return activeFor ? activeFor.some((item) => pathname === item || pathname.startsWith(`${item}/`)) : false;
 }
 
