@@ -2,6 +2,7 @@ import AdminDashboardSidebar from "@/components/shared/admin-dashboard-sidebar";
 import { cookies } from "next/headers";
 import Image from "next/image";
 import jwt, { type JwtPayload } from "jsonwebtoken";
+import { Toaster } from "sonner";
 
 import { getProfile } from "@/services/user/profile-service";
 
@@ -54,6 +55,7 @@ export default async function Layout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f6f2ec_0%,#f1ebe2_48%,#ebe1d4_100%)] text-foreground">
+      <Toaster position="top-right" richColors />
       <div className="grid min-h-screen lg:grid-cols-[290px_minmax(0,1fr)]">
         <AdminDashboardSidebar user={user} />
 

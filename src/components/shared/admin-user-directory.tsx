@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, ShieldBan, UserRound, Users } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
+import { toast } from "sonner";
 
 import { Input } from "@/components/ui/input";
 
@@ -69,7 +70,6 @@ export default function AdminUserDirectory({
   const [search, setSearch] = useState(searchValue);
   const [isPending, startTransition] = useTransition();
   const [actionUserId, setActionUserId] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState("");
 
   const showSearch = pathname === "/admin/dashboard/users";
   const normalizedUsers = useMemo(
@@ -114,7 +114,6 @@ export default function AdminUserDirectory({
 
   const handleStatusChange = async (userId: string, nextStatus: "ACTIVE" | "BLOCKED") => {
     setActionUserId(userId);
-    setFeedback("");
 
     try {
       const res = await fetch(`/api/admin/users/${userId}`, {
@@ -128,15 +127,17 @@ export default function AdminUserDirectory({
       const result = await res.json();
 
       if (!res.ok || result?.success === false) {
-        setFeedback(result?.message || "Failed to update user status.");
+        toast.error(result?.message || "Failed to update user status.");
         return;
       }
 
-      setFeedback(nextStatus === "BLOCKED" ? "User blocked successfully." : "User unblocked successfully.");
+      toast.success(
+        nextStatus === "BLOCKED" ? "User blocked successfully." : "User unblocked successfully."
+      );
       router.refresh();
     } catch (error) {
       console.error("Failed to update user status:", error);
-      setFeedback("Something went wrong while updating user status.");
+      toast.error("Something went wrong while updating user status.");
     } finally {
       setActionUserId(null);
     }
@@ -191,12 +192,7 @@ export default function AdminUserDirectory({
         </form>
       ) : null}
 
-      {feedback ? (
-        <div className="rounded-[1.4rem] border border-primary/10 bg-primary/5 px-4 py-3 text-sm text-foreground">
-          {feedback}
-        </div>
-      ) : null}
-
+     
       {normalizedUsers.length > 0 ? (
         <div className="rounded-[1.8rem] border border-black/5 bg-white/92 shadow-[0_18px_40px_-35px_rgba(95,76,55,0.32)]">
           <div className="overflow-x-auto rounded-[1.8rem]">
