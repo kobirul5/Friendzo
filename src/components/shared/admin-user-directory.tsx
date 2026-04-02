@@ -3,8 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { MoreHorizontal, Search, ShieldBan, UserRound, Users } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { Search, ShieldBan, UserRound, Users } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
 
 import { Input } from "@/components/ui/input";
 
@@ -21,8 +21,16 @@ export type AdminDirectoryUser = {
   createdAt?: string | null;
 };
 
+export type AdminDirectoryMeta = {
+  page?: number;
+  limit?: number;
+  totalUsers?: number;
+  totalPages?: number;
+};
+
 type AdminUserDirectoryProps = {
   users: AdminDirectoryUser[];
+  meta?: AdminDirectoryMeta | null;
   title: string;
   subtitle: string;
   emptyTitle: string;
@@ -47,6 +55,7 @@ function formatDate(value?: string | null) {
 
 export default function AdminUserDirectory({
   users,
+  meta,
   title,
   subtitle,
   emptyTitle,
@@ -61,13 +70,6 @@ export default function AdminUserDirectory({
   const [isPending, startTransition] = useTransition();
   const [actionUserId, setActionUserId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState("");
-  const [openMenu, setOpenMenu] = useState<{
-    userId: string;
-    top: number;
-    left: number;
-    isBlocked: boolean;
-  } | null>(null);
-  const menuRef = useRef<HTMLDivElement | null>(null);
 
   const showSearch = pathname === "/admin/dashboard/users";
   const normalizedUsers = useMemo(
@@ -79,31 +81,9 @@ export default function AdminUserDirectory({
       })),
     [users]
   );
-
-  useEffect(() => {
-    if (!openMenu) return;
-
-    const handlePointerDown = (event: MouseEvent) => {
-      const target = event.target as Node;
-
-      if (menuRef.current?.contains(target)) return;
-      setOpenMenu(null);
-    };
-
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOpenMenu(null);
-      }
-    };
-
-    window.addEventListener("mousedown", handlePointerDown);
-    window.addEventListener("keydown", handleEscape);
-
-    return () => {
-      window.removeEventListener("mousedown", handlePointerDown);
-      window.removeEventListener("keydown", handleEscape);
-    };
-  }, [openMenu]);
+  const currentPage = meta?.page ?? 1;
+  const totalPages = meta?.totalPages ?? 1;
+  const totalUsers = meta?.totalUsers ?? normalizedUsers.length;
 
   const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -117,6 +97,15 @@ export default function AdminUserDirectory({
     }
 
     params.set("page", "1");
+
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`);
+    });
+  };
+
+  const handlePageChange = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", String(page));
 
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`);
@@ -144,7 +133,6 @@ export default function AdminUserDirectory({
       }
 
       setFeedback(nextStatus === "BLOCKED" ? "User blocked successfully." : "User unblocked successfully.");
-      setOpenMenu(null);
       router.refresh();
     } catch (error) {
       console.error("Failed to update user status:", error);
@@ -171,7 +159,7 @@ export default function AdminUserDirectory({
 
         <div className="inline-flex items-center gap-2 rounded-full bg-primary/7 px-4 py-2 text-sm text-muted-foreground">
           <Users className="h-4 w-4 text-primary" />
-          <span>{normalizedUsers.length} users</span>
+          <span>{totalUsers} users</span>
         </div>
       </div>
 
@@ -257,7 +245,7 @@ export default function AdminUserDirectory({
                           </div>
                         </div>
                       </td>
-                      <td className="max-w-[220px] px-4 py-4 text-muted-foreground">
+                      <td className="max-w-55 px-4 py-4 text-muted-foreground">
                         <span className="block truncate">{user.email || "No email found"}</span>
                       </td>
                       <td className="px-4 py-4 text-muted-foreground">{user.role || "USER"}</td>
@@ -274,28 +262,28 @@ export default function AdminUserDirectory({
                       </td>
                       <td className="px-4 py-4 text-muted-foreground">{formatDate(user.createdAt)}</td>
                       <td className="px-4 py-4">
-                        <div className="flex justify-end">
+                        <div className="flex justify-end gap-2">
+                          <Link
+                            href={`/admin/dashboard/my-profile?id=${user.id}`}
+                            className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/8 text-primary transition hover:bg-primary/14"
+                            title="View profile"
+                            aria-label="View profile"
+                          >
+                            <UserRound className="h-4 w-4" />
+                          </Link>
                           <button
                             type="button"
-                            onClick={(event) => {
-                              const rect = event.currentTarget.getBoundingClientRect();
-                              const nextLeft = Math.max(16, rect.right - 176);
-                              const nextTop = rect.bottom + 8;
-
-                              setOpenMenu((current) =>
-                                current?.userId === user.id
-                                  ? null
-                                  : {
-                                      userId: user.id,
-                                      top: nextTop,
-                                      left: nextLeft,
-                                      isBlocked,
-                                    }
-                              );
-                            }}
-                            className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/6 text-foreground transition hover:bg-primary/12"
+                            disabled={isActing}
+                            onClick={() => handleStatusChange(user.id, isBlocked ? "ACTIVE" : "BLOCKED")}
+                            className={`flex h-10 w-10 items-center justify-center rounded-full transition ${
+                              isBlocked
+                                ? "bg-primary/8 text-primary hover:bg-primary/14"
+                                : "bg-destructive/10 text-destructive hover:bg-destructive/15"
+                            } disabled:cursor-not-allowed disabled:opacity-70`}
+                            title={isBlocked ? "Unblock user" : "Block user"}
+                            aria-label={isBlocked ? "Unblock user" : "Block user"}
                           >
-                            <MoreHorizontal className="h-4 w-4" />
+                            <ShieldBan className="h-4 w-4" />
                           </button>
                         </div>
                       </td>
@@ -313,44 +301,32 @@ export default function AdminUserDirectory({
         </div>
       )}
 
-      {openMenu ? (
-        <div
-          ref={menuRef}
-          className="fixed z-[100] w-44 rounded-2xl border border-black/5 bg-white p-2 shadow-xl"
-          style={{
-            top: openMenu.top,
-            left: openMenu.left,
-          }}
-        >
-          <Link
-            href={`/admin/dashboard/my-profile?id=${openMenu.userId}`}
-            onClick={() => setOpenMenu(null)}
-            className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-foreground hover:bg-primary/8"
-          >
-            <UserRound className="h-4 w-4" />
-            View profile
-          </Link>
-          <button
-            type="button"
-            disabled={actionUserId === openMenu.userId}
-            onClick={() =>
-              handleStatusChange(openMenu.userId, openMenu.isBlocked ? "ACTIVE" : "BLOCKED")
-            }
-            className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm ${
-              openMenu.isBlocked
-                ? "text-primary hover:bg-primary/8"
-                : "text-destructive hover:bg-destructive/10"
-            } disabled:cursor-not-allowed disabled:opacity-70`}
-          >
-            <ShieldBan className="h-4 w-4" />
-            {actionUserId === openMenu.userId
-              ? "Updating..."
-              : openMenu.isBlocked
-                ? "Unblock user"
-                : "Block user"}
-          </button>
+      {totalPages > 1 ? (
+        <div className="flex flex-col gap-3 rounded-[1.6rem] border border-white/70 bg-white/85 px-4 py-4 shadow-[0_18px_40px_-35px_rgba(95,76,55,0.28)] sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            Page {currentPage} of {totalPages}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={currentPage <= 1 || isPending}
+              onClick={() => handlePageChange(currentPage - 1)}
+              className="inline-flex h-10 items-center justify-center rounded-xl border border-primary/10 px-4 text-sm font-medium text-foreground transition hover:bg-primary/8 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              disabled={currentPage >= totalPages || isPending}
+              onClick={() => handlePageChange(currentPage + 1)}
+              className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
         </div>
       ) : null}
+
     </div>
   );
 }

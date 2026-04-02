@@ -21,13 +21,14 @@ export async function PATCH(
 
   try {
     const body = await request.json();
-    const res = await fetch(`${BASE_URL}/dashboard/users/${userId}`, {
-      method: "PATCH",
+    const res = await fetch(`${BASE_URL}/dashboard`, {
+      method: "PUT",
       headers: {
         Authorization: accessToken,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        userId,
         status: body?.status,
       }),
       cache: "no-store",

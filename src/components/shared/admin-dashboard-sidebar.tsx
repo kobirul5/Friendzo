@@ -57,6 +57,7 @@ const navSections: NavSection[] = [
         activeFor: ["/admin/dashboard/users", "/admin/dashboard/my-profile"],
         children: [
           { label: "All Users", href: "/admin/dashboard/users", icon: Users, indent: true, exact: true },
+          { label: "Active Users", href: "/admin/dashboard/users/unblocked", icon: Users, indent: true },
           { label: "Blocked Users", href: "/admin/dashboard/users/blocked", icon: ShieldBan, indent: true },
         ],
       }

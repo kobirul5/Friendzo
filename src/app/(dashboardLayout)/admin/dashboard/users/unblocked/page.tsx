@@ -11,41 +11,30 @@ const DEFAULT_LIMIT = "10";
 const DEFAULT_SORT_BY = "createdAt";
 const DEFAULT_SORT_ORDER = "desc";
 
-type UsersPageProps = {
+type UnblockedUsersPageProps = {
   searchParams?: Promise<{
-    search?: string;
     page?: string;
     limit?: string;
     sortBy?: string;
     sortOrder?: string;
-    isDating?: string;
   }>;
 };
 
-async function getUsers(options: {
-  search: string;
+async function getUnblockedUsers(options: {
   page: string;
   limit: string;
   sortBy: string;
   sortOrder: string;
-  isDating?: string;
 }): Promise<{ users: AdminDirectoryUser[]; meta: AdminDirectoryMeta | null }> {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get("accessToken")?.value;
-  const params = new URLSearchParams();
-
-  params.set("page", options.page);
-  params.set("limit", options.limit);
-  params.set("sortBy", options.sortBy);
-  params.set("sortOrder", options.sortOrder);
-
-  if (options.search) {
-    params.set("search", options.search);
-  }
-
-  if (options.isDating) {
-    params.set("isDating", options.isDating);
-  }
+  const params = new URLSearchParams({
+    page: options.page,
+    limit: options.limit,
+    sortBy: options.sortBy,
+    sortOrder: options.sortOrder,
+    status: "ACTIVE",
+  });
 
   try {
     const res = await fetch(`${BASE_URL}/dashboard/all-users?${params.toString()}`, {
@@ -57,12 +46,12 @@ async function getUsers(options: {
         : undefined,
       cache: "no-store",
     });
-    const result = await res.json();
 
     if (!res.ok) {
       return { users: [], meta: null };
     }
 
+    const result = await res.json();
     return {
       users: Array.isArray(result?.data)
         ? result.data
@@ -72,42 +61,32 @@ async function getUsers(options: {
       meta: result?.data?.meta ?? null,
     };
   } catch (error) {
-    console.error("Failed to fetch admin users:", error);
+    console.error("Failed to fetch unblocked users:", error);
     return { users: [], meta: null };
   }
 }
 
-export default async function UsersPage({ searchParams }: UsersPageProps) {
+export default async function UnblockedUsersPage({ searchParams }: UnblockedUsersPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : {};
-  const search = (resolvedSearchParams.search || "").trim();
   const page = resolvedSearchParams.page || DEFAULT_PAGE;
   const limit = resolvedSearchParams.limit || DEFAULT_LIMIT;
   const sortBy = resolvedSearchParams.sortBy || DEFAULT_SORT_BY;
   const sortOrder = resolvedSearchParams.sortOrder || DEFAULT_SORT_ORDER;
-  const isDating = resolvedSearchParams.isDating;
-  const { users, meta } = await getUsers({
-    search,
+  const { users, meta } = await getUnblockedUsers({
     page,
     limit,
     sortBy,
     sortOrder,
-    isDating,
   });
 
   return (
     <AdminUserDirectory
       users={users}
       meta={meta}
-      title="All Users"
-      subtitle="Browse every registered account from the admin dashboard and search by name or email."
-      emptyTitle={search ? "No user matched your search" : "No users found"}
-      emptyDescription={
-        search
-          ? "Try a different name or email keyword to find the user you are looking for."
-          : "When users are available in the system, they will appear here."
-      }
-      searchValue={search}
-      searchPlaceholder="Search by name or email"
+      title="Unblocked Users"
+      subtitle="Review users who are currently active and not blocked."
+      emptyTitle="No unblocked users found"
+      emptyDescription="Users with active status will appear here."
     />
   );
 }

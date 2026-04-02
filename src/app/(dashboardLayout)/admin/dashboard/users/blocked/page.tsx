@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 
 import AdminUserDirectory, {
+  type AdminDirectoryMeta,
   type AdminDirectoryUser,
 } from "@/components/shared/admin-user-directory";
 
@@ -10,14 +11,28 @@ const DEFAULT_LIMIT = "10";
 const DEFAULT_SORT_BY = "createdAt";
 const DEFAULT_SORT_ORDER = "desc";
 
-async function getBlockedUsers(): Promise<AdminDirectoryUser[]> {
+type BlockedUsersPageProps = {
+  searchParams?: Promise<{
+    page?: string;
+    limit?: string;
+    sortBy?: string;
+    sortOrder?: string;
+  }>;
+};
+
+async function getBlockedUsers(options: {
+  page: string;
+  limit: string;
+  sortBy: string;
+  sortOrder: string;
+}): Promise<{ users: AdminDirectoryUser[]; meta: AdminDirectoryMeta | null }> {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get("accessToken")?.value;
   const params = new URLSearchParams({
-    page: DEFAULT_PAGE,
-    limit: DEFAULT_LIMIT,
-    sortBy: DEFAULT_SORT_BY,
-    sortOrder: DEFAULT_SORT_ORDER,
+    page: options.page,
+    limit: options.limit,
+    sortBy: options.sortBy,
+    sortOrder: options.sortOrder,
     status: "BLOCKED",
   });
 
@@ -34,27 +49,41 @@ async function getBlockedUsers(): Promise<AdminDirectoryUser[]> {
 
 
     if (!res.ok) {
-      return [];
+      return { users: [], meta: null };
     }
 
     const result = await res.json();
-    return Array.isArray(result?.data)
-      ? result.data
-      : Array.isArray(result?.data?.data)
-        ? result.data.data
-        : [];
+    return {
+      users: Array.isArray(result?.data)
+        ? result.data
+        : Array.isArray(result?.data?.data)
+          ? result.data.data
+          : [],
+      meta: result?.data?.meta ?? null,
+    };
   } catch (error) {
     console.error("Failed to fetch blocked users:", error);
-    return [];
+    return { users: [], meta: null };
   }
 }
 
-export default async function BlockedUsersPage() {
-  const users = await getBlockedUsers();
+export default async function BlockedUsersPage({ searchParams }: BlockedUsersPageProps) {
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const page = resolvedSearchParams.page || DEFAULT_PAGE;
+  const limit = resolvedSearchParams.limit || DEFAULT_LIMIT;
+  const sortBy = resolvedSearchParams.sortBy || DEFAULT_SORT_BY;
+  const sortOrder = resolvedSearchParams.sortOrder || DEFAULT_SORT_ORDER;
+  const { users, meta } = await getBlockedUsers({
+    page,
+    limit,
+    sortBy,
+    sortOrder,
+  });
 
   return (
     <AdminUserDirectory
       users={users}
+      meta={meta}
       title="Blocked Users"
       subtitle="Review every restricted account from the admin dashboard in one place."
       emptyTitle="No blocked users found"
