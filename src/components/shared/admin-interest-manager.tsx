@@ -389,7 +389,7 @@ export default function AdminInterestManager({
         </div>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 xl:grid-cols-4">
         {interests.map((interest) => (
           <article
             key={interest.id}
