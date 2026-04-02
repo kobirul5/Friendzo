@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Check, ImagePlus, LoaderCircle, Sparkles } from "lucide-react";
+import { ArrowLeft, Check, ImagePlus, LoaderCircle } from "lucide-react";
 
 import { completeProfile } from "@/services/complete-profile";
+import { InterestGrid } from "@/components/profile/interest-grid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -316,51 +317,19 @@ export default function CompleteProfileForm({
                 </div>
               ) : null}
 
+              {selectedInterests.map((interest) => (
+                <input key={interest} type="hidden" name="interests" value={interest} />
+              ))}
+
               {interests.length > 0 ? (
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {interests.map((interest) => {
-                    const selected = selectedInterests.includes(interest.name);
-
-                    return (
-                      <label
-                        key={interest.id || interest.name}
-                        className={cn(
-                          "flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-sm transition-colors",
-                          selected
-                            ? "border-primary bg-primary/10 text-foreground"
-                            : "border-border bg-white hover:border-primary/40 hover:bg-primary/5"
-                        )}
-                      >
-                        {interest.image ? (
-                          <img
-                            src={interest.image}
-                            alt={interest.name}
-                            className="h-11 w-11 rounded-2xl object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                            <Sparkles className="h-4 w-4" />
-                          </div>
-                        )}
-
-                        <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
-                          <span className="truncate font-medium">{interest.name}</span>
-                          <div className="flex items-center gap-2">
-                            {selected ? <Check className="h-4 w-4 text-primary" /> : null}
-                            <input
-                              type="checkbox"
-                              name="interests"
-                              value={interest.name}
-                              checked={selected}
-                              onChange={() => toggleInterest(interest.name)}
-                              className="sr-only"
-                            />
-                          </div>
-                        </div>
-                      </label>
-                    );
-                  })}
-                </div>
+                <InterestGrid
+                  interests={interests}
+                  emptyMessage="No interests loaded yet"
+                  initialCount={6}
+                  selectedNames={selectedInterests}
+                  onToggle={toggleInterest}
+                  gridClassName="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6"
+                />
               ) : (
                 <div className="rounded-2xl border border-dashed border-border bg-muted/10 px-4 py-8 text-center">
                   <p className="text-sm font-medium text-foreground">No interests loaded yet</p>

@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { InterestBadge } from "@/components/profile/interest-badge";
+import { InterestGrid } from "@/components/profile/interest-grid";
 import {
   ProfileTabs,
   type ProfileEvent,
@@ -201,20 +201,13 @@ export default async function ProfilePage() {
               <div className="mt-10 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="font-bold text-lg">Interests</h3>
-                  <button className="text-xs font-bold uppercase tracking-widest text-primary hover:underline">View all</button>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
-                  {profile.interestsDetails?.slice(0, 3).map((interest) => (
-                    <InterestBadge 
-                      key={interest.id} 
-                      name={interest.name} 
-                      image={interest.image || undefined} 
-                    />
-                  ))}
-                  {(!profile.interestsDetails || profile.interestsDetails.length === 0) && (
-                    <p className="col-span-3 text-sm text-muted-foreground italic">Add interests to see them here</p>
-                  )}
-                </div>
+                <InterestGrid
+                  interests={profile.interestsDetails || []}
+                  emptyMessage="Add interests to see them here"
+                  initialCount={4}
+                  gridClassName="grid grid-cols-2 gap-3"
+                />
               </div>
             </CardContent>
           </Card>
