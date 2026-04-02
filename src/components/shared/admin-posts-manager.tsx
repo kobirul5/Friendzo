@@ -2,18 +2,12 @@
 
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { MoreHorizontal, Search, Trash2, View } from "lucide-react";
+import { Search, Trash2, View } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
+import AdminPostDetailSheet from "@/components/shared/admin-post-detail-sheet";
 import { Input } from "@/components/ui/input";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 
 export type AdminPostItem = {
   id: string;
@@ -28,8 +22,27 @@ export type AdminPostItem = {
     email?: string | null;
     profileImage?: string | null;
   } | null;
-  MemoryLike?: Array<unknown>;
-  Comment?: Array<unknown>;
+  MemoryLike?: Array<{
+    id: string;
+    user?: {
+      id: string;
+      firstName?: string | null;
+      lastName?: string | null;
+      email?: string | null;
+      profileImage?: string | null;
+    } | null;
+  }>;
+  Comment?: Array<{
+    id: string;
+    content?: string;
+    user?: {
+      id: string;
+      firstName?: string | null;
+      lastName?: string | null;
+      email?: string | null;
+      profileImage?: string | null;
+    } | null;
+  }>;
 };
 
 export type AdminPostsMeta = {
@@ -63,7 +76,8 @@ export default function AdminPostsManager({
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(initialSearch);
   const [activePost, setActivePost] = useState<AdminPostItem | null>(null);
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [detailTab, setDetailTab] = useState<"overview" | "likes" | "comments">("overview");
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -106,7 +120,6 @@ export default function AdminPostsManager({
 
   const handleDelete = async (postId: string) => {
     setDeletingId(postId);
-    setOpenMenuId(null);
 
     try {
       const res = await fetch(`/api/admin/posts/${postId}`, {
@@ -126,6 +139,45 @@ export default function AdminPostsManager({
       toast.error("Something went wrong while deleting the post.");
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const requestDeleteConfirmation = (postId: string) => {
+    toast("Delete this post?", {
+      description: "This action cannot be undone.",
+      action: {
+        label: "Delete",
+        onClick: () => {
+          void handleDelete(postId);
+        },
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => {},
+      },
+      duration: 10000,
+    });
+  };
+
+  const handleViewPost = async (postId: string) => {
+    setIsDetailLoading(true);
+    setDetailTab("overview");
+
+    try {
+      const res = await fetch(`/api/admin/posts/${postId}`);
+      const result = await res.json();
+
+      if (!res.ok || result?.success === false) {
+        toast.error(result?.message || "Failed to load post details.");
+        return;
+      }
+
+      setActivePost(result?.data ?? null);
+    } catch (error) {
+      console.error("Failed to load post detail:", error);
+      toast.error("Something went wrong while loading post details.");
+    } finally {
+      setIsDetailLoading(false);
     }
   };
 
@@ -173,7 +225,6 @@ export default function AdminPostsManager({
                 const previewStatus = post.description || post.address || "No description";
                 const likes = post.MemoryLike?.length ?? 0;
                 const comments = post.Comment?.length ?? 0;
-                const isMenuOpen = openMenuId === post.id;
                 const isDeleting = deletingId === post.id;
 
                 return (
@@ -196,39 +247,26 @@ export default function AdminPostsManager({
                     <td className="px-4 py-4 text-foreground/80">{likes}</td>
                     <td className="px-4 py-4 text-foreground/80">{comments}</td>
                     <td className="px-4 py-4">
-                      <div className="relative flex justify-end">
+                      <div className="flex justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => setOpenMenuId((current) => (current === post.id ? null : post.id))}
-                          className="flex h-9 w-9 items-center justify-center rounded-full text-foreground transition hover:bg-primary/8"
+                          onClick={() => handleViewPost(post.id)}
+                          className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/8 text-primary transition hover:bg-primary/14"
+                          title="View Post"
+                          aria-label="View Post"
                         >
-                          <MoreHorizontal className="h-4 w-4" />
+                          <View className="h-4 w-4" />
                         </button>
-
-                        {isMenuOpen ? (
-                          <div className=" absolute right-0 top-10 z-100 w-36 rounded-2xl border border-black/5 bg-white p-2 shadow-xl">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setActivePost(post);
-                                setOpenMenuId(null);
-                              }}
-                              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-foreground hover:bg-primary/8"
-                            >
-                              <View className="h-4 w-4" />
-                              View Post
-                            </button>
-                            <button
-                              type="button"
-                              disabled={isDeleting}
-                              onClick={() => handleDelete(post.id)}
-                              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-70"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              {isDeleting ? "Deleting..." : "Delete Post"}
-                            </button>
-                          </div>
-                        ) : null}
+                        <button
+                          type="button"
+                          disabled={isDeleting}
+                          onClick={() => requestDeleteConfirmation(post.id)}
+                          className="flex h-9 w-9 items-center justify-center rounded-full bg-destructive/10 text-destructive transition hover:bg-destructive/15 disabled:opacity-70"
+                          title={isDeleting ? "Deleting..." : "Delete Post"}
+                          aria-label="Delete Post"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -295,38 +333,18 @@ export default function AdminPostsManager({
         </div>
       </div>
 
-      <Sheet open={Boolean(activePost)} onOpenChange={(open) => (!open ? setActivePost(null) : null)}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
-          <SheetHeader>
-            <SheetTitle>Post Details</SheetTitle>
-            <SheetDescription>Review the selected memory post from the admin panel.</SheetDescription>
-          </SheetHeader>
-
-          {activePost ? (
-            <div className="space-y-5 px-1 py-4 sm:px-4">
-              <div className="relative aspect-[0.95] overflow-hidden rounded-[1.6rem] border border-black/5">
-                <Image src={activePost.image} alt={activePost.description} fill className="object-cover" />
-              </div>
-              <div className="rounded-[1.4rem] border border-black/5 bg-white p-4">
-                <p className="text-sm font-semibold text-foreground">
-                  {[activePost.user?.firstName, activePost.user?.lastName].filter(Boolean).join(" ").trim() || "Unknown User"}
-                </p>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  {activePost.description}
-                </p>
-                {activePost.address ? (
-                  <p className="mt-3 text-xs text-muted-foreground">Location: {activePost.address}</p>
-                ) : null}
-                <div className="mt-4 flex items-center gap-5 text-sm text-muted-foreground">
-                  <span>{activePost.MemoryLike?.length ?? 0} likes</span>
-                  <span>{activePost.Comment?.length ?? 0} comments</span>
-                  <span>{formatTime(activePost.createdAt)}</span>
-                </div>
-              </div>
-            </div>
-          ) : null}
-        </SheetContent>
-      </Sheet>
+      <AdminPostDetailSheet
+        post={activePost}
+        open={Boolean(activePost)}
+        isLoading={isDetailLoading}
+        detailTab={detailTab}
+        onOpenChange={(open) => {
+          if (!open) {
+            setActivePost(null);
+          }
+        }}
+        onDetailTabChange={setDetailTab}
+      />
     </div>
   );
 }
