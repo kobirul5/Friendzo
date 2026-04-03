@@ -145,9 +145,9 @@ export default function RegistrationForm() {
               )}
             >
               <option value="">Select Gender</option>
-              <option value="HIM">Male (HIM)</option>
-              <option value="HER">Female (HER)</option>
-              <option value="EVERYONE">Other (EVERYONE)</option>
+              <option value="MALE">Male</option>
+              <option value="FEMALE">Female</option>
+              <option value="OTHER">Other</option>
             </select>
           </FieldContent>
           {getFieldError("gender") && (

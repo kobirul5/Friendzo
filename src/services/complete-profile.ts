@@ -14,7 +14,7 @@ const completeProfileSchema = z.object({
   address: z.string().optional().or(z.literal("")),
   about: z.string().min(10, "About must be at least 10 characters."),
   age: z.string().min(1, "Age is required."),
-  gender: z.enum(["HIM", "HER", "EVERYONE"], {
+  gender: z.enum(["MALE", "FEMALE", "OTHER"], {
     message: "Please select a gender.",
   }),
 });

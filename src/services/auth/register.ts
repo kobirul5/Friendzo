@@ -13,7 +13,7 @@ const registerValidationZodSchema = z.object({
     lastName: z.string().min(2, "Last Name must be at least 2 characters").max(32, "Last Name must be at most 32 characters").optional().or(z.literal("")),
     phoneNumber: z.string().optional().or(z.literal("")),
     address: z.string().optional().or(z.literal("")),
-    gender: z.enum(["HIM", "HER", "EVERYONE", ""]).optional(),
+    gender: z.enum(["MALE", "FEMALE", "OTHER", ""]).optional(),
     age: z.string().optional().or(z.literal("")),
     password: z.string().min(6, "Password must be at least 6 characters").max(32, "Password must be at most 32 characters"),
     confirmPassword: z.string().min(6, "Password must be at least 6 characters").max(32, "Password must be at most 32 characters"),

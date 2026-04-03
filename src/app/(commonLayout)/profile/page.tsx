@@ -32,7 +32,7 @@ type ProfileData = {
   firstName?: string | null;
   lastName?: string | null;
   profileImage?: string | null;
-  gender?: "HER" | "HIM" | "EVERYONE" | null;
+  gender?: "MALE" | "FEMALE" | "OTHER" | "HER" | "HIM" | "EVERYONE" | null;
   age?: number | null;
   address?: string | null;
   followersCount: number;
@@ -151,7 +151,13 @@ export default async function ProfilePage() {
                 <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-muted-foreground">
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/30">
                     <Heart className="h-4 w-4 text-primary" />
-                    <span>{profile.gender === "HER" ? "Female" : profile.gender === "HIM" ? "Male" : "Other"}</span>
+                    <span>{
+                      profile.gender === "FEMALE" || profile.gender === "HER"
+                        ? "Female"
+                        : profile.gender === "MALE" || profile.gender === "HIM"
+                        ? "Male"
+                        : "Other"
+                    }</span>
                   </div>
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/30">
                     <Calendar className="h-4 w-4 text-primary" />

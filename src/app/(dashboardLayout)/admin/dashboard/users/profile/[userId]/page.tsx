@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { Button } from "@/components/ui/button";
 import { InterestBadge } from "@/components/profile/interest-badge";
 import { MemoryCard } from "@/components/profile/memory-card";
-import { Coins, MapPin, Mars, UserCircle, Venus } from "lucide-react";
+import { Coins, Heart, MapPin, Mars, UserCircle, Venus } from "lucide-react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
@@ -33,7 +33,7 @@ type AdminProfileData = {
   firstName?: string | null;
   lastName?: string | null;
   profileImage?: string | null;
-  gender?: "HER" | "HIM" | "EVERYONE" | null;
+  gender?: "MALE" | "FEMALE" | "OTHER" | "HER" | "HIM" | "EVERYONE" | null;
   age?: number | null;
   address?: string | null;
   followersCount?: number;
@@ -166,17 +166,19 @@ export default async function AdminUserProfilePage({
 
             <div className="mt-6 flex flex-wrap items-center gap-5 text-sm text-foreground">
               <div className="inline-flex items-center gap-2">
-                {profile.gender === "HER" ? (
+                {(profile.gender === "FEMALE" || profile.gender === "HER") ? (
                   <Venus className="h-4 w-4 text-primary" />
-                ) : (
+                ) : (profile.gender === "MALE" || profile.gender === "HIM") ? (
                   <Mars className="h-4 w-4 text-primary" />
+                ) : (
+                  <Heart className="h-4 w-4 text-primary" />
                 )}
                 <span>
-                  {profile.gender === "HER"
-                    ? "Her"
-                    : profile.gender === "HIM"
-                      ? "Him"
-                      : "Everyone"}
+                  {profile.gender === "FEMALE" || profile.gender === "HER"
+                    ? "Female"
+                    : profile.gender === "MALE" || profile.gender === "HIM"
+                      ? "Male"
+                      : "Other"}
                 </span>
               </div>
               <div className="inline-flex items-center gap-2">

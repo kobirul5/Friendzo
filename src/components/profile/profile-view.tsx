@@ -28,7 +28,7 @@ export type ProfileViewData = {
   firstName?: string | null;
   lastName?: string | null;
   profileImage?: string | null;
-  gender?: "HER" | "HIM" | "EVERYONE" | null;
+  gender?: "MALE" | "FEMALE" | "OTHER" | "HER" | "HIM" | "EVERYONE" | null;
   age?: number | null;
   address?: string | null;
   followersCount: number;
@@ -125,9 +125,9 @@ export function ProfileView({
                     <div className="flex items-center gap-2">
                       <Heart className="h-4 w-4 text-primary" />
                       <span>
-                        {profile.gender === "HER"
+                        {profile.gender === "FEMALE" || profile.gender === "HER"
                           ? "Female"
-                          : profile.gender === "HIM"
+                          : profile.gender === "MALE" || profile.gender === "HIM"
                             ? "Male"
                             : "Other"}
                       </span>

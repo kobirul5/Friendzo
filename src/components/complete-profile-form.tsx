@@ -244,9 +244,9 @@ export default function CompleteProfileForm({
                 )}
               >
                 <option value="">Select gender</option>
-                <option value="HIM">Male</option>
-                <option value="HER">Female</option>
-                <option value="EVERYONE">Other</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
+                <option value="OTHER">Other</option>
               </select>
             </FieldContent>
             <FieldError>{getFieldError("gender")}</FieldError>
