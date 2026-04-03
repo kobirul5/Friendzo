@@ -1,27 +1,14 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
-import {
-  CalendarDays,
-  ChevronRight,
-  Compass,
-  Home as HomeIcon,
-  Info,
-  Search,
-} from "lucide-react";
+import { CalendarDays, Search } from "lucide-react";
 
 import EventsFeedClient, {
   type EventFeedItem,
 } from "@/components/events-feed-client";
 import ContactsSidebar from "@/components/shared/contacts-sidebar";
+import NavigationSidebar from "@/components/shared/navigation-sidebar";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-
-const sidebarLinks = [
-  { name: "Home", href: "/", icon: HomeIcon },
-  { name: "Events", href: "/events", icon: CalendarDays, active: true },
-  { name: "Explore", href: "/explore", icon: Compass },
-  { name: "About Us", href: "/about", icon: Info },
-];
 
 type PaginatedEventsResponse = {
   data: EventFeedItem[];
@@ -75,38 +62,7 @@ export default async function EventsPage() {
     <main className="min-h-[calc(100vh-4rem)] bg-[linear-gradient(180deg,#f6f1ea_0%,#efe6db_55%,#e8ddd1_100%)]">
       <div className="container mx-auto px-4 py-5 sm:px-6 lg:px-8">
         <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)_320px]">
-          <aside className="hidden xl:block">
-            <div className="sticky top-24 space-y-5">
-              <div className="overflow-hidden rounded-[2rem] border border-white/65 bg-white/80 p-5 shadow-[0_20px_60px_-40px_rgba(88,70,52,0.45)] backdrop-blur-md">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/70">
-                  Navigation
-                </p>
-                <div className="mt-4 space-y-2">
-                  {sidebarLinks.map((item) => {
-                    const Icon = item.icon;
-
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        className={`flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition-colors ${
-                          item.active
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted/30 text-foreground hover:bg-primary/8"
-                        }`}
-                      >
-                        <span className="flex items-center gap-3">
-                          <Icon className="h-4 w-4" />
-                          {item.name}
-                        </span>
-                        <ChevronRight className="h-4 w-4 opacity-70" />
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </aside>
+          <NavigationSidebar />
 
           <section className="min-w-0 space-y-6">
             <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/85 p-5 shadow-[0_20px_60px_-40px_rgba(88,70,52,0.45)] backdrop-blur-md sm:p-6">
