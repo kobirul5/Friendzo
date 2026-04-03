@@ -178,8 +178,7 @@ export default function AdminPostsManager({
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Hello, Jhon Son!</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Post Management</p>
+          <p className="mt-2 text-2xl text-muted-foreground">Post Management</p>
         </div>
       </div>
 

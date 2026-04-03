@@ -110,21 +110,14 @@ export default async function Page() {
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/70">
             Dashboard Home
           </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
-            Hello, Jhon Son!
-          </h1>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
-            Live admin overview loaded from the `/dashboard` response with current platform stats and latest users.
-          </p>
+          <p>   </p>
         </div>
 
         <div className="rounded-[1.4rem] border border-primary/10 bg-primary/5 px-5 py-4">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
             Overview
           </p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Page {dashboard.meta?.page ?? 1} of {dashboard.meta?.totalPages ?? 1}
-          </p>
+
         </div>
       </div>
 
