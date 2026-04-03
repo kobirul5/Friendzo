@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, Trash2, View } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { confirmToast } from "@/components/shared/ConfirmToast";
 
 import AdminPostDetailSheet from "@/components/shared/admin-post-detail-sheet";
 import { Input } from "@/components/ui/input";
@@ -143,19 +144,11 @@ export default function AdminPostsManager({
   };
 
   const requestDeleteConfirmation = (postId: string) => {
-    toast("Delete this post?", {
-      description: "This action cannot be undone.",
-      action: {
-        label: "Delete",
-        onClick: () => {
-          void handleDelete(postId);
-        },
+    confirmToast({
+      message: "Are you sure you want to delete this post? This action cannot be undone and will remove all associated likes and comments.",
+      onConfirm: () => {
+        void handleDelete(postId);
       },
-      cancel: {
-        label: "Cancel",
-        onClick: () => {},
-      },
-      duration: 10000,
     });
   };
 

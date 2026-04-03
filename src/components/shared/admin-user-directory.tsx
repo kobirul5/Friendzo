@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, ShieldBan, UserRound, Users } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { confirmToast } from "@/components/shared/ConfirmToast";
 
 import { Input } from "@/components/ui/input";
 
@@ -113,34 +114,44 @@ export default function AdminUserDirectory({
   };
 
   const handleStatusChange = async (userId: string, nextStatus: "ACTIVE" | "BLOCKED") => {
-    setActionUserId(userId);
+    const isBlocking = nextStatus === "BLOCKED";
+    
+    confirmToast({
+      message: isBlocking 
+        ? "Are you sure you want to block this user? They will no longer be able to access their account or interact with the platform."
+        : "Are you sure you want to unblock this user? They will regain full access to the platform.",
+      confirmText: isBlocking ? "Block User" : "Unblock User",
+      variant: isBlocking ? "destructive" : "default",
+      onConfirm: async () => {
+        setActionUserId(userId);
+        try {
+          const res = await fetch(`/api/admin/users/${userId}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ status: nextStatus }),
+          });
 
-    try {
-      const res = await fetch(`/api/admin/users/${userId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: nextStatus }),
-      });
+          const result = await res.json();
 
-      const result = await res.json();
+          if (!res.ok || result?.success === false) {
+            toast.error(result?.message || "Failed to update user status.");
+            return;
+          }
 
-      if (!res.ok || result?.success === false) {
-        toast.error(result?.message || "Failed to update user status.");
-        return;
-      }
-
-      toast.success(
-        nextStatus === "BLOCKED" ? "User blocked successfully." : "User unblocked successfully."
-      );
-      router.refresh();
-    } catch (error) {
-      console.error("Failed to update user status:", error);
-      toast.error("Something went wrong while updating user status.");
-    } finally {
-      setActionUserId(null);
-    }
+          toast.success(
+            nextStatus === "BLOCKED" ? "User blocked successfully." : "User unblocked successfully."
+          );
+          router.refresh();
+        } catch (error) {
+          console.error("Failed to update user status:", error);
+          toast.error("Something went wrong while updating user status.");
+        } finally {
+          setActionUserId(null);
+        }
+      },
+    });
   };
 
   return (

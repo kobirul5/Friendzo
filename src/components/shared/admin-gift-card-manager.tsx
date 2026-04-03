@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ImagePlus, MoreHorizontal, Pencil, Plus, Sparkles, Trash2, UploadCloud } from "lucide-react";
 
 import { toast } from "sonner";
+import { confirmToast } from "@/components/shared/ConfirmToast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -185,33 +186,26 @@ export default function AdminGiftCardManager({
   };
 
   const handleDelete = async (giftCard: GiftCardItem) => {
-    toast.error(`Delete "${giftCard.name}" gift card?`, {
-      description: "This action cannot be undone.",
-      action: {
-        label: "Delete",
-        onClick: async () => {
-          try {
-            const res = await fetch(`/api/admin/gift-card/${giftCard.id}`, {
-              method: "DELETE",
-            });
-            const result = await res.json();
+    confirmToast({
+      message: `Are you sure you want to delete "${giftCard.name}"? This gift card will no longer be available for purchase.`,
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/gift-card/${giftCard.id}`, {
+            method: "DELETE",
+          });
+          const result = await res.json();
 
-            if (!res.ok || result?.success === false) {
-              toast.error(result?.message || "Failed to delete gift card.");
-              return;
-            }
-
-            await reloadGiftCards();
-            toast.success("Gift card deleted successfully.");
-          } catch (error) {
-            console.error("Gift card delete failed:", error);
-            toast.error("Something went wrong while deleting the gift card.");
+          if (!res.ok || result?.success === false) {
+            toast.error(result?.message || "Failed to delete gift card.");
+            return;
           }
-        },
-      },
-      cancel: {
-        label: "Cancel",
-        onClick: () => {},
+
+          await reloadGiftCards();
+          toast.success("Gift card deleted successfully.");
+        } catch (error) {
+          console.error("Gift card delete failed:", error);
+          toast.error("Something went wrong while deleting the gift card.");
+        }
       },
     });
   };

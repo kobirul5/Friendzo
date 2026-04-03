@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ImagePlus, MoreHorizontal, Pencil, Plus, Sparkles, Trash2, UploadCloud } from "lucide-react";
 
+import { confirmToast } from "@/components/shared/ConfirmToast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -179,27 +180,29 @@ export default function AdminInterestManager({
   };
 
   const handleDelete = async (interest: InterestItem) => {
-    const confirmed = window.confirm(`Delete "${interest.name}" interest?`);
-    if (!confirmed) return;
+    confirmToast({
+      message: `Are you sure you want to delete "${interest.name}"? This action will remove it from all users and cannot be undone.`,
+      onConfirm: async () => {
+        setFeedback("");
+        try {
+          const res = await fetch(`/api/admin/interest/${interest.id}`, {
+            method: "DELETE",
+          });
+          const result = await res.json();
 
-    setFeedback("");
-    try {
-      const res = await fetch(`/api/admin/interest/${interest.id}`, {
-        method: "DELETE",
-      });
-      const result = await res.json();
+          if (!res.ok || result?.success === false) {
+            setFeedback(result?.message || "Failed to delete interest.");
+            return;
+          }
 
-      if (!res.ok || result?.success === false) {
-        setFeedback(result?.message || "Failed to delete interest.");
-        return;
-      }
-
-      await reloadInterests();
-      setFeedback("Interest deleted successfully.");
-    } catch (error) {
-      console.error("Interest delete failed:", error);
-      setFeedback("Something went wrong while deleting the interest.");
-    }
+          await reloadInterests();
+          setFeedback("Interest deleted successfully.");
+        } catch (error) {
+          console.error("Interest delete failed:", error);
+          setFeedback("Something went wrong while deleting the interest.");
+        }
+      },
+    });
   };
 
   return (
@@ -315,7 +318,7 @@ export default function AdminInterestManager({
                                 fill
                                 className="object-cover"
                               />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                              <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/20 to-transparent" />
                               <div className="absolute inset-x-0 bottom-0 p-4 text-white">
                                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/75">
                                   Live preview
@@ -402,7 +405,7 @@ export default function AdminInterestManager({
                 fill
                 className="object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
               <div className="absolute right-3 top-3">
                 <details className="group relative">
                   <summary className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full bg-white/85 text-foreground shadow">
