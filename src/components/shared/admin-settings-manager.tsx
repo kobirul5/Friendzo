@@ -5,7 +5,7 @@ import { Camera, Mail, Phone, User as UserIcon, Loader2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { updateProfile } from "@/services/user/update-profile";
+import { updateProfile, updateProfileImage } from "@/services/user/update-profile";
 import { changePassword } from "@/services/auth/change-password";
 
 type AdminSettingsManagerProps = {
@@ -39,6 +39,7 @@ export default function AdminSettingsManager({
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
   const [isUpdatingProfile, startUpdateProfile] = useTransition();
+  const [isUpdatingImage, startUpdateImage] = useTransition();
   const [isChangingPassword, startChangePassword] = useTransition();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,12 +57,7 @@ export default function AdminSettingsManager({
     const formData = new FormData();
     formData.append("firstName", firstName);
     formData.append("lastName", lastName);
-    formData.append("email", email);
     formData.append("phoneNumber", phoneNumber);
-
-    if (profileImageFile) {
-      formData.append("profileImage", profileImageFile);
-    }
 
     startUpdateProfile(async () => {
       try {
@@ -74,6 +70,28 @@ export default function AdminSettingsManager({
       } catch (error) {
         console.error("Update profile error:", error);
         toast.error("Something went wrong while updating your profile.");
+      }
+    });
+  };
+
+  const handleImageSubmit = async () => {
+    if (!profileImageFile) return;
+
+    const formData = new FormData();
+    formData.append("profileImage", profileImageFile);
+
+    startUpdateImage(async () => {
+      try {
+        const res = await updateProfileImage(formData);
+        if (res?.success) {
+          toast.success(res.message || "Profile image updated successfully.");
+          setProfileImageFile(null); // Clear stage after success
+        } else {
+          toast.error(res?.message || "Failed to update profile image.");
+        }
+      } catch (error) {
+        console.error("Update image error:", error);
+        toast.error("Something went wrong while updating your profile image.");
       }
     });
   };
@@ -151,11 +169,11 @@ export default function AdminSettingsManager({
 
             {profileImageFile && (
               <button
-                onClick={handleDetailsSubmit}
-                disabled={isUpdatingProfile}
+                onClick={handleImageSubmit}
+                disabled={isUpdatingImage}
                 className=" h-9 items-center justify-center rounded-full bg-primary px-5 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg transition hover:bg-primary/80 active:scale-95 disabled:opacity-70 mb-2"
               >
-                {isUpdatingProfile ? (
+                {isUpdatingImage ? (
                   <Loader2 className="mr-2 h-3 w-3 animate-spin" />
                 ) : null}
                 Save Photo
@@ -261,9 +279,9 @@ export default function AdminSettingsManager({
                   <Input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    disabled
                     placeholder="Enter email address"
-                    className="h-12 rounded-2xl border-none bg-gray-100/80 px-5 focus-visible:ring-primary/20"
+                    className="h-12 rounded-2xl border-none bg-gray-100/80 px-5 focus-visible:ring-primary/20 opacity-60 cursor-not-allowed"
                   />
                 </div>
                 <div className="space-y-2.5">
