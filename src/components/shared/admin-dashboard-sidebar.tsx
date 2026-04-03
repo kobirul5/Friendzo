@@ -60,7 +60,7 @@ const navSections: NavSection[] = [
           { label: "Active Users", href: "/admin/dashboard/users/unblocked", icon: Users, indent: true },
           { label: "Blocked Users", href: "/admin/dashboard/users/blocked", icon: ShieldBan, indent: true },
         ],
-      }
+      },
     ],
   },
   {
@@ -70,15 +70,22 @@ const navSections: NavSection[] = [
       { label: "Interests", href: "/admin/dashboard/interests", icon: Layers3 },
       { label: "Gift Cards", href: "/admin/dashboard/gift-cards", icon: Gift },
       { label: "Coin Prices", href: "/admin/dashboard/coin-prices", icon: BadgeDollarSign },
-      { label: "Chat Monitor", href: "/admin/dashboard/chat-monitor", icon: MessageSquareText },
+      // { label: "Chat Monitor", href: "/admin/dashboard/chat-monitor", icon: MessageSquareText },
     ],
   },
   {
     title: "Business",
     items: [
       { label: "Payments", href: "/admin/dashboard/payments", icon: CreditCard },
-      { label: "Managers", href: "/admin/dashboard/managers", icon: Users },
-      { label: "Reports", href: "/admin/dashboard/reports", icon: BarChart3 },
+      {
+        label: "Reports",
+        icon: BarChart3,
+        activeFor: ["/admin/dashboard/reports"],
+        children: [
+          { label: "User Reports", href: "/admin/dashboard/reports/user", icon: Users, indent: true },
+          { label: "Post Reports", href: "/admin/dashboard/reports/post", icon: WalletCards, indent: true },
+        ],
+      },
       { label: "Settings", href: "/admin/dashboard/settings", icon: Settings },
     ],
   },
@@ -231,7 +238,7 @@ export default function AdminDashboardSidebar({ user }: { user?: AdminSidebarUse
                   className="object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-primary">
+                <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-primary" >
                   {userInitial}
                 </div>
               )}

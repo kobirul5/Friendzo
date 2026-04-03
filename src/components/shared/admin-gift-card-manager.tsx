@@ -318,7 +318,7 @@ export default function AdminGiftCardManager({
             </SheetDescription>
           </SheetHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-6 py-6">
+          <form onSubmit={handleSubmit} className="space-y-6 p-6 ">
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
               <Input
@@ -358,7 +358,7 @@ export default function AdminGiftCardManager({
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 px-6">
               <Label>Image</Label>
               <div
                 className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
@@ -372,7 +372,7 @@ export default function AdminGiftCardManager({
               >
                 {previewImage ? (
                   <div className="space-y-4">
-                    <div className="relative aspect-square w-full max-w-xs mx-auto overflow-hidden rounded-lg">
+                    <div className="relative aspect-square w-full max-w-xs mx-auto h-44 overflow-hidden rounded-lg">
                       <Image
                         src={previewImage}
                         alt="Gift card preview"
