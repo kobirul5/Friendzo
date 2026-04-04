@@ -22,6 +22,9 @@ const registerValidationZodSchema = z.object({
     path: ["confirmPassword"],
 });
 
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+
+
 export const registerUser = async (_currentState: any, formData: FormData): Promise<any> => {
     try {
         const rawData = {
@@ -61,7 +64,7 @@ export const registerUser = async (_currentState: any, formData: FormData): Prom
             age: rawData.age ? parseInt(rawData.age as string) : undefined,
         };
 
-        const res = await fetch("http://localhost:5000/api/v1/users/register", {
+        const res = await fetch(`${BASE_URL}/users/register`, {
             method: "POST",
             body: JSON.stringify(payload),
             headers: {

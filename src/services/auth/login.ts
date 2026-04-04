@@ -12,10 +12,13 @@ const loginValidationZodSchema = z.object({
     password: z.string().min(4, "Password must be at least 6 characters").max(32, "Password must be at most 32 characters"),
 })
 
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+
+
 export const loginUser = async (_currentState: any, formData: any): Promise<any> => {
 
-    let accessTokenObj: null | any = null;
-    let refreshTokenObj: null | any = null;
+    // let accessTokenObj: null | any = null;
+    // let refreshTokenObj: null | any = null;
 
     try {
         const loginData = {
@@ -36,7 +39,7 @@ export const loginUser = async (_currentState: any, formData: any): Promise<any>
             }
         }
 
-        const res = await fetch("http://localhost:5000/api/v1/auth/login", {
+        const res = await fetch(`${BASE_URL}/auth/login`, {
             method: "POST",
             body: JSON.stringify(loginData),
             headers: {
