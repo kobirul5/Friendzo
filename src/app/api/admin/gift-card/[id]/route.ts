@@ -20,7 +20,7 @@ export async function GET(
 
   try {
     const { id } = await params;
-    const res = await fetch(`${BASE_URL}/admin/gift-card/${id}`, {
+    const res = await fetch(`${BASE_URL}/gift-card/${id}`, {
       method: "GET",
       headers: {
         Authorization: accessToken,
@@ -59,7 +59,7 @@ export async function PUT(
     const { id } = await params;
     const formData = await request.formData();
 
-    const res = await fetch(`${BASE_URL}/admin/gift-card/${id}`, {
+    const res = await fetch(`${BASE_URL}/gift-card/${id}`, {
       method: "PUT",
       headers: {
         Authorization: accessToken,
@@ -95,7 +95,7 @@ export async function DELETE(
 
   try {
     const { id } = await params;
-    const res = await fetch(`${BASE_URL}/admin/gift-card/${id}`, {
+    const res = await fetch(`${BASE_URL}/gift-card/${id}`, {
       method: "DELETE",
       headers: {
         Authorization: accessToken,

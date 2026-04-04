@@ -16,6 +16,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { confirmToast } from "@/components/shared/ConfirmToast";
 import {
   createMemoryComment,
   deleteMemoryComment,
@@ -523,28 +524,33 @@ export default function MemoriesFeedClient({
       return;
     }
 
-    startCommentTransition(async () => {
-      const result = await deleteMemoryComment(commentId);
+    confirmToast({
+      message: "Are you sure you want to delete this comment? This action cannot be undone.",
+      onConfirm: () => {
+        startCommentTransition(async () => {
+          const result = await deleteMemoryComment(commentId);
 
-      if (!result?.success) {
-        setCommentMessage(result?.message || "Failed to delete comment.");
-        return;
-      }
+          if (!result?.success) {
+            setCommentMessage(result?.message || "Failed to delete comment.");
+            return;
+          }
 
-      const nextComments = comments.filter((comment) => comment.id !== commentId);
-      setComments(nextComments);
-      setCommentMessage("");
-      setSelectedMemory({
-        ...selectedMemory,
-        totalComments: nextComments.length,
-      });
-      setItems((currentItems) =>
-        currentItems.map((item) =>
-          item.id === selectedMemory.id
-            ? { ...item, totalComments: nextComments.length }
-            : item
-        )
-      );
+          const nextComments = comments.filter((comment) => comment.id !== commentId);
+          setComments(nextComments);
+          setCommentMessage("");
+          setSelectedMemory({
+            ...selectedMemory,
+            totalComments: nextComments.length,
+          });
+          setItems((currentItems) =>
+            currentItems.map((item) =>
+              item.id === selectedMemory.id
+                ? { ...item, totalComments: nextComments.length }
+                : item
+            )
+          );
+        });
+      },
     });
   };
 

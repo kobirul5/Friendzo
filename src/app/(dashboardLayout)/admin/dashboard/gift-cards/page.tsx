@@ -18,7 +18,7 @@ async function getAdminGiftCards(): Promise<GiftCardItem[]> {
   const accessToken = cookieStore.get("accessToken")?.value;
 
   try {
-    const res = await fetch(`${BASE_URL}/admin/gift-card`, {
+    const res = await fetch(`${BASE_URL}/gift-card`, {
       headers: accessToken
         ? {
             Authorization: accessToken,
