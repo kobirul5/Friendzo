@@ -4,9 +4,11 @@
 import { cookies } from "next/headers";
 import { parse } from "cookie";
 
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+
 export const forgotPassword = async (email: string): Promise<any> => {
     try {
-        const res = await fetch("http://localhost:5000/api/v1/auth/forgot-password", {
+        const res = await fetch(`${BASE_URL}/auth/forgot-password`, {
             method: "POST",
             body: JSON.stringify({ email }),
             headers: {
@@ -23,7 +25,7 @@ export const forgotPassword = async (email: string): Promise<any> => {
 
 export const verifyOtp = async (email: string, otp: string): Promise<any> => {
     try {
-        const res = await fetch("http://localhost:5000/api/v1/auth/verify-otp", {
+        const res = await fetch(`${BASE_URL}/auth/verify-otp`, {
             method: "POST",
             body: JSON.stringify({ email, otp: Number(otp) }),
             headers: {
@@ -66,7 +68,7 @@ export const verifyOtp = async (email: string, otp: string): Promise<any> => {
 
 export const resetPassword = async (payload: any): Promise<any> => {
     try {
-        const res = await fetch("http://localhost:5000/api/v1/auth/reset-password", {
+        const res = await fetch(`${BASE_URL}/auth/reset-password`, {
             method: "POST",
             body: JSON.stringify(payload),
             headers: {
