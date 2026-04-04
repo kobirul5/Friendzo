@@ -29,8 +29,7 @@ type AdminInterestManagerProps = {
   initialInterests: InterestItem[];
 };
 
-// const FALLBACK_IMAGE =
-//   "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80";
+const FALLBACK_IMAGE = "/fallback.jpg";
 
 export default function AdminInterestManager({
   initialInterests,
@@ -44,6 +43,7 @@ export default function AdminInterestManager({
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const setSelectedFile = (file: File | null) => {
@@ -119,6 +119,7 @@ export default function AdminInterestManager({
     const res = await fetch("/api/admin/interest", { cache: "no-store" });
     const result = await res.json();
     setInterests(Array.isArray(result?.data) ? result.data : []);
+    setImageErrors(new Set()); // clear so updated images load fresh
   };
 
   useEffect(() => {
@@ -400,10 +401,13 @@ export default function AdminInterestManager({
           >
             <div className="relative h-56 sm:h-44">
               <Image
-                src={interest.image || ""}
+                src={(!imageErrors.has(interest.id) && interest.image) ? interest.image : FALLBACK_IMAGE}
                 alt={interest.name}
                 fill
                 className="object-cover"
+                onError={() =>
+                  setImageErrors((prev) => new Set(prev).add(interest.id))
+                }
               />
               <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
               <div className="absolute right-3 top-3">

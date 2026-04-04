@@ -41,8 +41,7 @@ const TAB_OPTIONS: { key: DiscoverTab; label: string; icon: typeof Sparkles }[] 
 
 const FALLBACK_NEARBY_QUERY =
   "lat=23.838795534051853&lng=90.38317015755169&minDistance=0&maxDistance=12";
-const FALLBACK_INTEREST_IMAGE =
-  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=640&q=80";
+const FALLBACK_INTEREST_IMAGE = "/fallback.jpg";
 
 function getUserName(user: DiscoverUser) {
   return [user.firstName, user.lastName].filter(Boolean).join(" ").trim() || "Friendzo User";
@@ -172,6 +171,7 @@ export default function DiscoverExperienceClient({ interests }: { interests: Int
   const [matchMessage, setMatchMessage] = useState("");
   const [nearbyMessage, setNearbyMessage] = useState("");
   const [buzzMessage, setBuzzMessage] = useState("");
+  const [interestImageErrors, setInterestImageErrors] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     let ignore = false;
@@ -322,7 +322,15 @@ export default function DiscoverExperienceClient({ interests }: { interests: Int
                   }`}
                 >
                   <div className="relative h-28">
-                    <Image src={interest.image || FALLBACK_INTEREST_IMAGE} alt={interest.name} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                    <Image
+                      src={(!interestImageErrors.has(interest.name) && interest.image) ? interest.image : FALLBACK_INTEREST_IMAGE}
+                      alt={interest.name}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      onError={() =>
+                        setInterestImageErrors((prev) => new Set(prev).add(interest.name))
+                      }
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                     <div className="absolute inset-x-0 bottom-0 p-3">
                       <p className="text-sm font-semibold text-white">{interest.name}</p>
