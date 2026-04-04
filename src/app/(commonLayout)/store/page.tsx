@@ -7,8 +7,7 @@ import {
   Coins as CoinsIcon, 
   Gift as GiftIcon, 
   LoaderCircle, 
-  ShoppingCart, 
-  Sparkles
+  ShoppingCart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -151,7 +150,7 @@ export default function StorePage() {
                         className="object-cover transition-transform duration-500 group-hover:scale-110"
                         onError={() => handleImageError(gift.id)}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 transition-opacity group-hover:opacity-80" />
+                      <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent opacity-60 transition-opacity group-hover:opacity-80" />
                       <div className="absolute top-4 right-4 rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white backdrop-blur-md border border-white/30">
                         {gift.category}
                       </div>

@@ -1,21 +1,24 @@
 import { getProfile } from "@/services/user/profile-service";
+import { logoutUser } from "@/services/auth/logout";
 import { cookies } from "next/headers";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import Image from "next/image";
-import { 
-  UserCircle, 
-  MapPin, 
-  Calendar, 
-  Settings, 
-  Edit3, 
-  Info, 
-  Heart 
+import {
+  UserCircle,
+  MapPin,
+  Calendar,
+  Settings,
+  Edit3,
+  Info,
+  Heart,
+  LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { InterestGrid } from "@/components/profile/interest-grid";
+import { LogoutButton } from "@/components/profile/logout-button";
 import {
   ProfileTabs,
   type ProfileEvent,
@@ -92,7 +95,7 @@ export default async function ProfilePage() {
         
         {/* Left Column: User Identity & Info */}
         <div className="lg:col-span-4 space-y-8">
-          <Card className="overflow-hidden rounded-[2.5rem] border-none shadow-2xl bg-white/50 backdrop-blur-xl">
+          <Card className="overflow-hidden rounded-[2.5rem] border-none shadow-2xl pt-0 bg-white/50 backdrop-blur-xl">
             {/* Header Image Area */}
             <div className="relative aspect-square w-full">
               {profile.profileImage ? (
@@ -107,12 +110,10 @@ export default async function ProfilePage() {
                   <UserCircle className="h-32 w-32 text-primary/20" />
                 </div>
               )}
-              
+
               {/* Floating Action Icons */}
-              <div className="absolute top-6 right-6 flex gap-3">
-                <Button size="icon" variant="secondary" className="rounded-2xl bg-white/40 backdrop-blur h-11 w-11 hover:bg-white/60">
-                  <Settings className="h-5 w-5" />
-                </Button>
+              <div className="absolute top-4 right-4 flex gap-2">
+                <LogoutButton />
               </div>
 
               {/* Edit Floating Button */}
@@ -126,15 +127,9 @@ export default async function ProfilePage() {
 
             <CardContent className="pt-10 pb-8 px-8">
               {!profile.isProfileComplete ? (
-                <div className="mb-6 rounded-[1.5rem] border border-primary/15 bg-primary/8 p-4">
+                <div className="mb-6 rounded-[1.5rem] border border-primary/15 bg-primary/8 p-2">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <h2 className="text-base font-semibold text-foreground">Complete your profile</h2>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Add your bio, interests, and details so people can discover you properly.
-                      </p>
-                    </div>
-                    <Button asChild className="rounded-full">
+                    <Button asChild className="rounded-full w-full">
                       <Link href="/complete-profile">Complete Profile</Link>
                     </Button>
                   </div>

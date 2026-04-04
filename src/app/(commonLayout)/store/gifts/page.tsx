@@ -64,7 +64,7 @@ export default function GiftsStorePage() {
               Gift <span className="text-primary italic">Cards</span> Galore
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-              Express yourself and make someone's day. Select from our majestic collection of 
+              Express yourself and make someone&apos;s day. Select from our majestic collection of 
               gift cards and send them to your favorite people in the Friendzo circle.
             </p>
           </div>
@@ -76,7 +76,7 @@ export default function GiftsStorePage() {
       </div>
 
       {/* Main Content Area */}
-      <div className="min-h-[400px]">
+      <div className="min-h-100">
         {loading ? (
           <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-[2.5rem] border border-white/60 bg-white/40 backdrop-blur-sm">
             <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
@@ -100,7 +100,7 @@ export default function GiftsStorePage() {
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
                       onError={() => handleImageError(gift.id)}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 transition-opacity group-hover:opacity-80" />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent opacity-60 transition-opacity group-hover:opacity-80" />
                     
                     <div className="absolute top-4 right-4 rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white backdrop-blur-md border border-white/30">
                       {gift.category}

@@ -77,7 +77,7 @@ function UserHighlightCard({ user, badge }: { user: DiscoverUser; badge: string 
             {name.charAt(0)}
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/20 to-transparent" />
         <div className="absolute left-4 top-4 rounded-full bg-white/18 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md">
           {badge}
         </div>
@@ -331,7 +331,7 @@ export default function DiscoverExperienceClient({ interests }: { interests: Int
                         setInterestImageErrors((prev) => new Set(prev).add(interest.name))
                       }
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
                     <div className="absolute inset-x-0 bottom-0 p-3">
                       <p className="text-sm font-semibold text-white">{interest.name}</p>
                     </div>
