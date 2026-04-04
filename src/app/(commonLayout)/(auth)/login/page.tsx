@@ -2,7 +2,8 @@
 
 import LoginForm from "@/components/login-form";
 import Link from "next/link";
-import { LucideArrowRight, Sparkles } from "lucide-react";
+import { LucideArrowRight } from "lucide-react";
+import Image from "next/image";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
@@ -34,12 +35,12 @@ export default function LoginPage() {
           <div className="hidden lg:flex flex-col justify-between p-12 bg-primary/5 relative overflow-hidden border-r border-border/50">
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-10 translate-y-[-10px] animate-in fade-in slide-in-from-top-2 duration-700">
-                <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-xl shadow-primary/30">
-                  <Sparkles className="text-primary-foreground" size={24} />
-                </div>
-                <span className="text-3xl font-black tracking-tighter text-foreground italic drop-shadow-sm">
-                  Friendzo
-                </span>
+                <Link href="/" className="flex items-center gap-2">
+                  <Image src="/assets/logo.png" alt="Friendzo Logo" width={100} height={40} className="h-12 w-auto" />
+                  <span className="text-3xl font-black tracking-tighter text-foreground italic drop-shadow-sm">
+                    Friendzo
+                  </span>
+                </Link>
               </div>
               
               <div className="space-y-6 max-w-md animate-in fade-in slide-in-from-left-4 duration-1000 delay-200">
