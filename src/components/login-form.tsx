@@ -5,15 +5,15 @@ import {
   Field,
   FieldLabel,
   FieldContent,
-  FieldDescription,
   FieldGroup,
+  FieldError,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useActionState, useEffect } from "react";
 import { loginUser } from "@/services/auth/login";
 import Link from "next/link";
-import { LucideArrowRight } from "lucide-react";
+import { LucideArrowRight, Mail, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
@@ -36,91 +36,83 @@ export default function LoginForm() {
     }
   }, [state, router]);
 
-  // const getFieldError = (fieldName: string) => {
-  //   if (state && state.errors) {
-  //     console.log(state.errors,"state.errors");
-  //     console.log(fieldName,"fieldName");
-  //     const fieldError = state?.errors.find((err: any) => err.field === fieldName);
-  //     console.log(fieldError,"fieldError");
-  //     return fieldError.message;
-  //   } else {
-  //     return null;
-  //   }
-  // }
-  const getFieldError = (fieldName: string) => {
-    if (!state?.errors) return null;
-
-    const fieldError = state.errors.find((err: any) => err.field === fieldName);
-
-    return fieldError?.message ?? null;
+  const getErrors = (fieldName: string) => {
+    if (!state?.errors) return [];
+    return state.errors.filter((err: any) => err.field === fieldName);
   };
 
   return (
-    <form action={formAction} className="space-y-8">
-      <FieldGroup>
+    <form action={formAction} className="space-y-6">
+      <FieldGroup className="gap-6">
         {/* Email */}
         <Field>
-          <FieldLabel>
-            Email <span className="text-red-500">*</span>
+          <FieldLabel className="text-foreground/70 font-semibold mb-1 flex items-center gap-2">
+            <Mail size={16} className="text-primary/70" />
+            Email Address
           </FieldLabel>
           <FieldContent>
             <Input
               name="email"
               type="email"
               required
-              placeholder="Enter your email"
+              placeholder="name@example.com"
               disabled={isPending}
+              className="h-12 bg-secondary/30 border-border/50 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all rounded-xl"
             />
-            <FieldDescription>Registered email address</FieldDescription>
           </FieldContent>
-          {getFieldError("email") && (
-            <p className="text-sm text-red-500">{getFieldError("email")}</p>
-          )}
+          <FieldError errors={getErrors("email")} />
         </Field>
 
         {/* Password */}
-        <Field>
-          <FieldLabel>
-            Password <span className="text-red-500">*</span>
-          </FieldLabel>
+        <Field className="relative">
+          <div className="flex justify-between items-center mb-1">
+            <FieldLabel className="text-foreground/70 font-semibold flex items-center gap-2">
+              <Lock size={16} className="text-primary/70" />
+              Password
+            </FieldLabel>
+            <Link
+              href="/foget-password"
+              className="text-xs font-bold text-primary hover:underline transition-all"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <FieldContent>
             <Input
               name="password"
               type="password"
-              placeholder="Enter your password"
+              required
+              placeholder="••••••••"
               disabled={isPending}
+              className="h-12 bg-secondary/30 border-border/50 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all rounded-xl"
             />
-            <FieldDescription>Your account password</FieldDescription>
           </FieldContent>
-          {getFieldError("password") && (
-            <p className="text-sm text-red-500">{getFieldError("password")}</p>
-          )}
+          <FieldError errors={getErrors("password")} />
         </Field>
       </FieldGroup>
-
-      <div className="flex justify-end -mt-4">
-        <Link
-          href="/foget-password"
-          className="text-sm font-medium text-primary hover:underline transition-all"
-        >
-          Forgot password?
-        </Link>
-      </div>
 
       {/* Submit Button */}
       <Button
         type="submit"
-        className="w-full h-12 text-base font-semibold group"
+        className="w-full h-12 text-base font-bold rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all active:scale-[0.98] disabled:opacity-70 group mt-2"
         disabled={isPending}
       >
-        {isPending ? "Logging in..." : "Login"}
-        {!isPending && (
-          <LucideArrowRight
-            className="ml-2 transition-transform group-hover:translate-x-1"
-            size={18}
-          />
+        {isPending ? (
+          <span className="flex items-center gap-2">
+            <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+            Signing in...
+          </span>
+        ) : (
+          <span className="flex items-center justify-center gap-2">
+            Sign In
+            <LucideArrowRight
+              className="transition-transform group-hover:translate-x-1"
+              size={18}
+            />
+          </span>
         )}
       </Button>
     </form>
   );
 }
+
