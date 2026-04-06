@@ -39,6 +39,7 @@ const FALLBACK_IMAGE = "/fallback.jpg";
 
 export default function StorePage() {
   const [activeTab, setActiveTab] = useState<"coins" | "gifts">("coins");
+  const [giftCategory, setGiftCategory] = useState<string>("ALL");
   const [coins, setCoins] = useState<CoinPackage[]>([]);
   const [gifts, setGifts] = useState<GiftCard[]>([]);
   const [userCoins, setUserCoins] = useState<number>(0);
@@ -165,6 +166,10 @@ export default function StorePage() {
     setShowSendDialog(true);
   };
 
+  const filteredGifts = giftCategory === "ALL" 
+    ? gifts 
+    : gifts.filter(g => g.category?.toUpperCase() === giftCategory);
+
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-12">
       {/* Page Header */}
@@ -257,14 +262,40 @@ export default function StorePage() {
                 ))}
               </div>
             ) : (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {gifts.map((gift) => {
-                  const purchasedCount = getPurchasedCountForGift(gift.id);
-                  return (
-                    <div
-                      key={gift.id}
-                      className="group relative overflow-hidden rounded-[2.2rem] border border-black/5 bg-white shadow-[0_15px_45px_-30px_rgba(88,70,52,0.3)] transition-all hover:-translate-y-1 hover:shadow-[0_30px_60px_-25px_rgba(88,70,52,0.4)]"
+              <div className="flex flex-col md:flex-row gap-8">
+                {/* Sidebar for Gift Categories */}
+                <div className="w-full md:w-64 shrink-0 space-y-2">
+                  <h3 className="mb-4 text-sm font-bold uppercase tracking-widest text-muted-foreground ml-2">Categories</h3>
+                  {["ALL", "ESSENTIAL", "EXCLUSIVE", "MAJESTIC"].map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setGiftCategory(cat)}
+                      className={`w-full text-left px-5 py-3.5 rounded-2xl text-sm font-bold transition-all ${
+                        giftCategory === cat
+                          ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-[1.02]"
+                          : "bg-white/60 text-muted-foreground hover:bg-white hover:text-foreground border border-black/5"
+                      }`}
                     >
+                      {cat === "ALL" ? "All Gifts" : cat.charAt(0) + cat.slice(1).toLowerCase()}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Gifts Grid */}
+                <div className="flex-1">
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {filteredGifts.length === 0 && (
+                      <div className="col-span-full flex h-64 flex-col items-center justify-center rounded-[2.5rem] border border-dashed border-primary/20 bg-white/40 p-8 text-center backdrop-blur-sm">
+                        <p className="text-lg font-bold text-foreground">No gifts in this category</p>
+                      </div>
+                    )}
+                    {filteredGifts.map((gift) => {
+                      const purchasedCount = getPurchasedCountForGift(gift.id);
+                      return (
+                        <div
+                          key={gift.id}
+                          className="group relative overflow-hidden rounded-[2.2rem] border border-black/5 bg-white shadow-[0_15px_45px_-30px_rgba(88,70,52,0.3)] transition-all hover:-translate-y-1 hover:shadow-[0_30px_60px_-25px_rgba(88,70,52,0.4)]"
+                        >
                       <div className="relative aspect-square overflow-hidden">
                         <Image
                           src={(!imageErrors.has(gift.id) && gift.image) ? gift.image : FALLBACK_IMAGE}
@@ -283,6 +314,16 @@ export default function StorePage() {
                         </div>
                       </div>
                       <div className="space-y-2 p-4">
+                        <div className="flex items-center justify-between">
+                          <span className="inline-flex items-center rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-primary">
+                            {gift.category}
+                          </span>
+                          {purchasedCount > 0 && (
+                            <span className="text-xs font-medium text-muted-foreground">
+                              Owned: {purchasedCount}
+                            </span>
+                          )}
+                        </div>
                         <Button
                           onClick={() => handleBuyClick(gift)}
                           className="h-12 w-full rounded-2xl bg-primary font-bold text-white hover:bg-primary/90 transition-all"
@@ -302,6 +343,8 @@ export default function StorePage() {
                     </div>
                   );
                 })}
+                  </div>
+                </div>
               </div>
             )}
 

@@ -46,6 +46,10 @@ type ProfileData = {
   event?: ProfileEvent[];
   isProfileComplete?: boolean;
   totalCoins?: number;
+  gifts?: {
+    purchases: Record<string, any[]>;
+    received: Record<string, any[]>;
+  };
 };
 
 export default async function ProfilePage() {
@@ -72,7 +76,8 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
-  const profile = await getProfile(userId) as ProfileData | null;
+  // Revalidate on each load to get fresh data
+  const profile = await getProfile(userId, { revalidate: 0 }) as ProfileData | null;
 
   if (!profile) {
     return (
@@ -236,8 +241,10 @@ export default async function ProfilePage() {
           <ProfileTabs
             memories={profile.memories}
             events={profile.event}
+            gifts={profile.gifts}
             displayName={displayName}
             profileImage={profileImage}
+            isOwnProfile={true}
           />
         </div>
       </div>

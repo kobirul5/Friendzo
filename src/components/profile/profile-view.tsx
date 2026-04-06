@@ -23,6 +23,7 @@ import {
   ProfileTabs,
   type ProfileEvent,
   type ProfileMemory,
+  type ProfileGiftsData,
 } from "@/components/profile/profile-tabs";
 import { FollowButton } from "@/components/profile/follow-button";
 
@@ -52,6 +53,7 @@ export type ProfileViewData = {
   followStatus?: FollowStatus;
   userRequestStatus?: FollowStatus;
   userId?: string;
+  gifts?: ProfileGiftsData;
 };
 
 type ProfileViewProps = {
@@ -245,8 +247,10 @@ export function ProfileView({
           <ProfileTabs
             memories={profile.memories}
             events={profile.event}
+            gifts={profile.gifts}
             displayName={displayName}
             profileImage={profileImage}
+            isOwnProfile={false}
           />
         </div>
       </div>

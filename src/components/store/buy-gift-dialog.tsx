@@ -41,21 +41,30 @@ export function BuyGiftDialog({ gift, userCoins, isOpen, onClose, onSuccess }: B
 
     setIsLoading(true);
     try {
+      // Ensure category is uppercase to match backend enum
+      const category = gift.category.toUpperCase();
+      
       const res = await fetch("/api/gift/buy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ giftCardId: gift.id, giftCategory: gift.category }),
+        body: JSON.stringify({ 
+          giftCardId: gift.id, 
+          giftCategory: category 
+        }),
       });
+
+      const data = await res.json();
+      console.log("Buy gift response:", data);
 
       if (res.ok) {
         setSuccess(true);
-        onSuccess();
+        await onSuccess(); // Wait for refresh
         setTimeout(() => {
           onClose();
           setSuccess(false);
         }, 1500);
       } else {
-        const data = await res.json();
+        console.error("Buy gift error response:", data);
         alert(data.message || "Failed to purchase gift");
       }
     } catch (error) {
