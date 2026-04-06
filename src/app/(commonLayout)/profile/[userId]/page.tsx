@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import jwt from "jsonwebtoken";
 import { UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getProfile } from "@/services/user/profile-service";
@@ -16,6 +18,21 @@ export default async function UserProfilePage({
     redirect("/profile");
   }
 
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("accessToken")?.value;
+  let currentUserId: string | null = null;
+
+  if (accessToken) {
+    try {
+      const decoded = jwt.decode(accessToken) as { id?: string } | null;
+      currentUserId = decoded?.id || null;
+    } catch (error) {
+      console.error("JWT decode error:", error);
+    }
+  }
+
+  const isOwnProfile = currentUserId === userId;
+
   const profile = (await getProfile(userId)) as ProfileViewData | null;
 
   if (!profile) {
@@ -30,5 +47,10 @@ export default async function UserProfilePage({
     );
   }
 
-  return <ProfileView profile={profile} />;
+  const profileWithId = {
+    ...profile,
+    userId: userId,
+  };
+
+  return <ProfileView profile={profileWithId} isOwnProfile={isOwnProfile} />;
 }

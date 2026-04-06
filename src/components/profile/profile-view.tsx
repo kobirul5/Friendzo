@@ -24,12 +24,15 @@ import {
   type ProfileEvent,
   type ProfileMemory,
 } from "@/components/profile/profile-tabs";
+import { FollowButton } from "@/components/profile/follow-button";
 
 type InterestDetail = {
   id: string;
   name: string;
   image?: string | null;
 };
+
+type FollowStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "CANCELED" | "NOTFOLLOW";
 
 export type ProfileViewData = {
   firstName?: string | null;
@@ -45,6 +48,10 @@ export type ProfileViewData = {
   memories?: ProfileMemory[];
   event?: ProfileEvent[];
   isProfileComplete?: boolean;
+  isFriend?: boolean;
+  followStatus?: FollowStatus;
+  userRequestStatus?: FollowStatus;
+  userId?: string;
 };
 
 type ProfileViewProps = {
@@ -128,11 +135,14 @@ export function ProfileView({
                     </h1>
                   </div>
 
-                  {!isOwnProfile && (
+                  {!isOwnProfile && profile.userId && (
                     <div className="flex items-center gap-2">
-                      <Button className="rounded-xl bg-primary px-6 font-semibold text-white hover:bg-primary/90">
-                        Follow
-                      </Button>
+                      <FollowButton
+                        targetUserId={profile.userId}
+                        initialFollowStatus={profile.followStatus || "NOTFOLLOW"}
+                        initialUserRequestStatus={profile.userRequestStatus || "NOTFOLLOW"}
+                        isProfileComplete={profile.isProfileComplete || false}
+                      />
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
