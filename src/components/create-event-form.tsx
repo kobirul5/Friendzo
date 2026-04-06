@@ -4,18 +4,16 @@
 
 import Link from "next/link";
 import Script from "next/script";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   CalendarDays,
   LoaderCircle,
-  LocateFixed,
   Map,
   MapPin,
   Image as ImageIcon,
-  Search,
   Sparkles,
   Upload,
 } from "lucide-react";
@@ -72,7 +70,9 @@ export default function CreateEventForm() {
   const markerRef = useRef<any>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [isResolvingAddress, setIsResolvingAddress] = useState(false);
-  const [isGoogleReady, setIsGoogleReady] = useState(false);
+  const [isGoogleReady, setIsGoogleReady] = useState(() => 
+    typeof window !== "undefined" && !!window.google?.maps
+  );
   const [address, setAddress] = useState("");
   const [coordinates, setCoordinates] = useState<Coordinates>({ lat: "", lng: "" });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -80,16 +80,60 @@ export default function CreateEventForm() {
   const [locationMessage, setLocationMessage] = useState(
     "Search an address, use your current location, or click on the map to pick a place."
   );
-  const googleMaps =
-    typeof window !== "undefined"
-      ? (window as Window & { google?: any }).google?.maps
-      : undefined;
 
-  useEffect(() => {
-    if (googleMaps) {
-      setIsGoogleReady(true);
+  const geocodeWithGoogle = useCallback((request: { address?: string; location?: { lat: number; lng: number } }) =>
+    new Promise<GoogleGeocodeResult[]>((resolve, reject) => {
+      if (!google.maps?.Geocoder) {
+        reject(new Error("Google Maps is not ready."));
+        return;
+      }
+
+      const geocoder = new google.maps.Geocoder() as GoogleMapsGeocoder;
+      geocoder.geocode(request, (results, status) => {
+        if (status === "OK" && results?.length) {
+          resolve(results);
+          return;
+        }
+
+        reject(new Error("Location not found."));
+      });
+    }), []);
+
+  const resolveAddressFromCoordinates = useCallback(async (
+    lat: number,
+    lng: number,
+    updateMessage = true
+  ) => {
+    if (!isGoogleReady) {
+      return;
     }
-  }, [googleMaps]);
+
+    try {
+      const results = await geocodeWithGoogle({
+        location: { lat, lng },
+      });
+
+      if (results[0]?.formatted_address) {
+        setAddress(results[0].formatted_address);
+      }
+
+      if (updateMessage) {
+        setLocationMessage("Location selected successfully.");
+      }
+    } catch {
+      if (updateMessage) {
+        setLocationMessage("Coordinates saved, but address could not be resolved.");
+      }
+    }
+  }, [isGoogleReady, geocodeWithGoogle]);
+
+  const updateMapLocation = useCallback((lat: number, lng: number) => {
+    const nextPoint = { lat, lng };
+
+    googleMapRef.current?.setCenter(nextPoint);
+    googleMapRef.current?.setZoom(15);
+    markerRef.current?.setPosition(nextPoint);
+  }, []);
 
   useEffect(() => {
     if (state?.success) {
@@ -99,18 +143,18 @@ export default function CreateEventForm() {
   }, [router, state]);
 
   useEffect(() => {
-    if (!isGoogleReady || !mapRef.current || !googleMaps?.Map || googleMapRef.current) {
+    if (!isGoogleReady || !mapRef.current || !google.maps.Map || googleMapRef.current) {
       return;
     }
 
     const defaultCenter = { lat: 23.8103, lng: 90.4125 };
-    const map = new googleMaps.Map(mapRef.current, {
+    const map = new google.maps.Map(mapRef.current, {
       center: defaultCenter,
       zoom: 12,
       disableDefaultUI: false,
       clickableIcons: false,
     });
-    const marker = new googleMaps.Marker({
+    const marker = new google.maps.Marker({
       position: defaultCenter,
       map,
     });
@@ -136,7 +180,7 @@ export default function CreateEventForm() {
       setLocationMessage("Location selected from the map.");
       void resolveAddressFromCoordinates(lat, lng, false);
     });
-  }, [googleMaps, isGoogleReady]);
+  }, [isGoogleReady, resolveAddressFromCoordinates]);
 
   useEffect(() => {
     return () => {
@@ -147,61 +191,7 @@ export default function CreateEventForm() {
   }, [imagePreview]);
 
   const getFieldError = (fieldName: string) =>
-    state?.errors?.find((error:any) => error.field === fieldName)?.message ?? null;
-
-  const geocodeWithGoogle = (request: { address?: string; location?: { lat: number; lng: number } }) =>
-    new Promise<GoogleGeocodeResult[]>((resolve, reject) => {
-      if (!googleMaps?.Geocoder) {
-        reject(new Error("Google Maps is not ready."));
-        return;
-      }
-
-      const geocoder = new googleMaps.Geocoder() as GoogleMapsGeocoder;
-      geocoder.geocode(request, (results, status) => {
-        if (status === "OK" && results?.length) {
-          resolve(results);
-          return;
-        }
-
-        reject(new Error("Location not found."));
-      });
-    });
-
-  const updateMapLocation = (lat: number, lng: number) => {
-    const nextPoint = { lat, lng };
-
-    googleMapRef.current?.setCenter(nextPoint);
-    googleMapRef.current?.setZoom(15);
-    markerRef.current?.setPosition(nextPoint);
-  };
-
-  const resolveAddressFromCoordinates = async (
-    lat: number,
-    lng: number,
-    updateMessage = true
-  ) => {
-    if (!googleMapsApiKey || !isGoogleReady) {
-      return;
-    }
-
-    try {
-      const results = await geocodeWithGoogle({
-        location: { lat, lng },
-      });
-
-      if (results[0]?.formatted_address) {
-        setAddress(results[0].formatted_address);
-      }
-
-      if (updateMessage) {
-        setLocationMessage("Location selected successfully.");
-      }
-    } catch {
-      if (updateMessage) {
-        setLocationMessage("Coordinates saved, but address could not be resolved.");
-      }
-    }
-  };
+    state?.errors?.find((error: any) => error.field === fieldName)?.message ?? null;
 
   const handleFindAddress = async () => {
     if (!address.trim()) {
@@ -454,8 +444,6 @@ export default function CreateEventForm() {
             </div>
 
             <div className="space-y-7">
-
-
               <div className="rounded-[2rem] border border-white/70 bg-white/90 p-5 shadow-[0_20px_60px_-44px_rgba(88,70,52,0.4)] sm:p-6">
                 <Field>
                   <FieldLabel>

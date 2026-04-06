@@ -4,7 +4,7 @@
 
 import Link from "next/link";
 import Script from "next/script";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -71,7 +71,9 @@ export default function CreateMemoryForm() {
   const markerRef = useRef<any>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [isResolvingAddress, setIsResolvingAddress] = useState(false);
-  const [isGoogleReady, setIsGoogleReady] = useState(false);
+  const [isGoogleReady, setIsGoogleReady] = useState(() => 
+    typeof window !== "undefined" && !!window.google?.maps
+  );
   const [address, setAddress] = useState("");
   const [coordinates, setCoordinates] = useState<Coordinates>({ lat: "", lng: "" });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -79,17 +81,6 @@ export default function CreateMemoryForm() {
   const [locationMessage, setLocationMessage] = useState(
     "Search an address, use your current location, or click on the map to pick a place."
   );
-  const googleMaps =
-    typeof window !== "undefined"
-      ? (window as Window & { google?: any }).google?.maps
-      : undefined;
-
-  useEffect(() => {
-    if (googleMaps) {
-      setIsGoogleReady(true);
-    }
-  }, [googleMaps]);
-
   useEffect(() => {
     if (state?.success) {
       router.push("/");
@@ -97,67 +88,16 @@ export default function CreateMemoryForm() {
     }
   }, [router, state]);
 
-  useEffect(() => {
-    if (!isGoogleReady || !mapRef.current || !googleMaps?.Map || googleMapRef.current) {
-      return;
-    }
-
-    const defaultCenter = { lat: 23.8103, lng: 90.4125 };
-    const map = new googleMaps.Map(mapRef.current, {
-      center: defaultCenter,
-      zoom: 12,
-      disableDefaultUI: false,
-      clickableIcons: false,
-    });
-    const marker = new googleMaps.Marker({
-      position: defaultCenter,
-      map,
-    });
-
-    googleMapRef.current = map;
-    markerRef.current = marker;
-
-    map.addListener("click", (event: { latLng?: { lat: () => number; lng: () => number } }) => {
-      const latLng = event.latLng;
-
-      if (!latLng) {
-        return;
-      }
-
-      const lat = latLng.lat();
-      const lng = latLng.lng();
-
-      setCoordinates({
-        lat: String(lat),
-        lng: String(lng),
-      });
-      marker.setPosition({ lat, lng });
-      setLocationMessage("Location selected from the map.");
-      void resolveAddressFromCoordinates(lat, lng, false);
-    });
-  }, [googleMaps, isGoogleReady]);
-
-  useEffect(() => {
-    return () => {
-      if (imagePreview?.startsWith("blob:")) {
-        URL.revokeObjectURL(imagePreview);
-      }
-    };
-  }, [imagePreview]);
-
-  const getFieldError = (fieldName: string) =>
-    state?.errors?.find((error:any) => error.field === fieldName)?.message ?? null;
-
-  const geocodeWithGoogle = (request: { address?: string; location?: { lat: number; lng: number } }) =>
+  const geocodeWithGoogle = useCallback((request: { address?: string; location?: { lat: number; lng: number } }) =>
     new Promise<GoogleGeocodeResult[]>((resolve, reject) => {
-      if (!googleMaps?.Geocoder) {
+      if (!google.maps?.Geocoder) {
         reject(new Error("Google Maps is not ready."));
         return;
       }
 
-      const geocoder = new googleMaps.Geocoder();
+      const geocoder = new google.maps.Geocoder();
 
-      geocoder.geocode(request, (results:any, status:any) => {
+      geocoder.geocode(request, (results: any, status: any) => {
         if (status === "OK" && results?.length) {
           resolve(results);
           return;
@@ -165,17 +105,9 @@ export default function CreateMemoryForm() {
 
         reject(new Error("Location not found."));
       });
-    });
+    }), []);
 
-  const updateMapLocation = (lat: number, lng: number) => {
-    const nextPoint = { lat, lng };
-
-    googleMapRef.current?.setCenter(nextPoint);
-    googleMapRef.current?.setZoom(15);
-    markerRef.current?.setPosition(nextPoint);
-  };
-
-  const resolveAddressFromCoordinates = async (
+  const resolveAddressFromCoordinates = useCallback(async (
     lat: number,
     lng: number,
     updateMessage = true
@@ -201,7 +133,58 @@ export default function CreateMemoryForm() {
         setLocationMessage("Coordinates saved, but address could not be resolved.");
       }
     }
-  };
+  }, [googleMapsApiKey, isGoogleReady, geocodeWithGoogle]);
+
+  useEffect(() => {
+    if (!isGoogleReady || !mapRef.current || !google.maps.Map || googleMapRef.current) {
+      return;
+    }
+
+    const defaultCenter = { lat: 23.8103, lng: 90.4125 };
+    const map = new google.maps.Map(mapRef.current, {
+      center: defaultCenter,
+      zoom: 12,
+      disableDefaultUI: false,
+      clickableIcons: false,
+    });
+    const marker = new google.maps.Marker({
+      position: defaultCenter,
+      map,
+    });
+
+    googleMapRef.current = map;
+    markerRef.current = marker;
+
+    map.addListener("click", (event: { latLng?: { lat: () => number; lng: () => number } }) => {
+      const latLng = event.latLng;
+
+      if (!latLng) {
+        return;
+      }
+
+      const lat = latLng.lat();
+      const lng = latLng.lng();
+
+      setCoordinates({
+        lat: String(lat),
+        lng: String(lng),
+      });
+      marker.setPosition({ lat, lng });
+      setLocationMessage("Location selected from the map.");
+      void resolveAddressFromCoordinates(lat, lng, false);
+    });
+  }, [isGoogleReady, resolveAddressFromCoordinates]);
+
+  const getFieldError = (fieldName: string) =>
+    state?.errors?.find((error: any) => error.field === fieldName)?.message ?? null;
+
+  const updateMapLocation = useCallback((lat: number, lng: number) => {
+    const nextPoint = { lat, lng };
+
+    googleMapRef.current?.setCenter(nextPoint);
+    googleMapRef.current?.setZoom(15);
+    markerRef.current?.setPosition(nextPoint);
+  }, []);
 
   const handleFindAddress = async () => {
     if (!address.trim()) {

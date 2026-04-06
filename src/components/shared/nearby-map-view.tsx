@@ -53,7 +53,9 @@ export default function NearbyMapView({
   const mapRef = useRef<HTMLDivElement>(null);
   const googleMapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
-  const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false);
+  const [googleMapsLoaded, setGoogleMapsLoaded] = useState(() => 
+    typeof window !== "undefined" && !!window.google?.maps
+  );
   const [filter, setFilter] = useState<FilterType>("all");
   const [selectedMarker, setSelectedMarker] = useState<{
     type: "user" | "event";
@@ -76,7 +78,9 @@ export default function NearbyMapView({
 
   // Initialize map when Google Maps loads
   useEffect(() => {
-    if (!googleMapsLoaded || !mapRef.current || googleMapRef.current) return;
+    // Specifically check for global google object to handle navigations
+    const isGoogleGloballyAvailable = typeof window !== "undefined" && window.google?.maps;
+    if ((!googleMapsLoaded && !isGoogleGloballyAvailable) || !mapRef.current || googleMapRef.current) return;
 
     const center = {
       lat: centerLat || DEFAULT_CENTER.lat,
@@ -126,40 +130,48 @@ export default function NearbyMapView({
       const position = { lat, lng };
       const name = `${user.firstName || ""} ${user.lastName || ""}`.trim() || "User";
 
-      // Create marker with user image or initial
-      const iconUrl = user.profileImage
-        ? `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-            <defs>
-              <clipPath id="clip-${user.id}">
-                <circle cx="32" cy="32" r="26"/>
-              </clipPath>
-            </defs>
-            <circle cx="32" cy="32" r="30" fill="#8b5cf6" stroke="white" stroke-width="4"/>
-            <image href="${user.profileImage}" x="6" y="6" width="52" height="52" clip-path="url(#clip-${user.id})"/>
-          </svg>
-        `)}`
-        : `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-            <circle cx="32" cy="32" r="30" fill="#8b5cf6" stroke="white" stroke-width="4"/>
-            <text x="32" y="40" text-anchor="middle" fill="white" font-size="24" font-weight="bold">${name.charAt(0)}</text>
-          </svg>
-        `)}`;
-
+      // Create invisible marker for positioning and interaction
       const marker = new google.maps.Marker({
         position,
         map,
         title: name,
-        icon: {
-          url: iconUrl,
-          scaledSize: new google.maps.Size(64, 64),
-          anchor: new google.maps.Point(32, 32),
-        },
+        opacity: 0, // Hidden, visuals handled by overlay
       });
 
-      // Create custom label above marker
+      // Create custom HTML marker + label
+      const markerEl = document.createElement("div");
+      markerEl.style.cssText = "position: absolute; display: flex; flex-direction: column; align-items: center; cursor: pointer; transform: translate(-50%, -100%);";
+      
+      const imgContainer = document.createElement("div");
+      imgContainer.style.cssText = `
+        width: 54px; 
+        height: 54px; 
+        border-radius: 50%; 
+        border: 4px solid white; 
+        background: #8b5cf6; 
+        overflow: hidden; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 8px;
+        transition: transform 0.2s;
+      `;
+
+      if (user.profileImage) {
+        const img = document.createElement("img");
+        img.src = user.profileImage;
+        img.style.cssText = "width: 100%; height: 100%; object-fit: cover;";
+        img.onerror = () => { imgContainer.textContent = name.charAt(0); imgContainer.style.color = "white"; imgContainer.style.fontWeight = "bold"; };
+        imgContainer.appendChild(img);
+      } else {
+        imgContainer.textContent = name.charAt(0);
+        imgContainer.style.color = "white";
+        imgContainer.style.fontWeight = "bold";
+        imgContainer.style.fontSize = "20px";
+      }
+
       const labelDiv = document.createElement("div");
-      labelDiv.className = "map-label";
       labelDiv.style.cssText = `
         background: linear-gradient(135deg, #8b5cf6, #a78bfa);
         color: white;
@@ -169,34 +181,29 @@ export default function NearbyMapView({
         border-radius: 20px;
         white-space: nowrap;
         box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
-        pointer-events: none;
-        position: absolute;
-        z-index: 100;
       `;
-      labelDiv.textContent = name.length > 20 ? name.substring(0, 18) + "..." : name;
+      labelDiv.textContent = name.length > 15 ? name.substring(0, 13) + "..." : name;
+
+      markerEl.appendChild(imgContainer);
+      markerEl.appendChild(labelDiv);
+
+      markerEl.onmouseenter = () => imgContainer.style.transform = "scale(1.1)";
+      markerEl.onmouseleave = () => imgContainer.style.transform = "scale(1)";
+      markerEl.onclick = () => setSelectedMarker({ type: "user", data: user, position });
 
       const overlay = new google.maps.OverlayView();
-      overlay.onAdd = () => {
-        const pane = overlay.getPanes()!.overlayMouseTarget;
-        pane.appendChild(labelDiv);
-      };
+      overlay.onAdd = () => overlay.getPanes()!.overlayMouseTarget.appendChild(markerEl);
       overlay.draw = () => {
         const projection = overlay.getProjection();
         if (!projection) return;
         const pixel = projection.fromLatLngToDivPixel(position);
         if (pixel) {
-          labelDiv.style.left = (pixel.x - 40) + "px";
-          labelDiv.style.top = (pixel.y - 60) + "px";
+          markerEl.style.left = pixel.x + "px";
+          markerEl.style.top = pixel.y + "px";
         }
       };
-      overlay.onRemove = () => {
-        labelDiv.parentNode?.removeChild(labelDiv);
-      };
+      overlay.onRemove = () => markerEl.parentNode?.removeChild(markerEl);
       overlay.setMap(map);
-
-      marker.addListener("click", () => {
-        setSelectedMarker({ type: "user", data: user, position });
-      });
 
       markersRef.current.push(marker);
       bounds.extend(position);
@@ -211,40 +218,46 @@ export default function NearbyMapView({
       const position = { lat, lng };
       const title = event.title || "Event";
 
-      // Create marker with event image or default icon
-      const iconUrl = event.image
-        ? `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-            <defs>
-              <clipPath id="clip-event-${event.id}">
-                <rect x="6" y="6" width="52" height="52" rx="12"/>
-              </clipPath>
-            </defs>
-            <rect x="2" y="2" width="60" height="60" rx="16" fill="#ec4899" stroke="white" stroke-width="4"/>
-            <image href="${event.image}" x="6" y="6" width="52" height="52" clip-path="url(#clip-event-${event.id})"/>
-          </svg>
-        `)}`
-        : `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-            <rect x="2" y="2" width="60" height="60" rx="16" fill="#ec4899" stroke="white" stroke-width="4"/>
-            <text x="32" y="36" text-anchor="middle" font-size="24">📅</text>
-          </svg>
-        `)}`;
-
+      // Create invisible marker for positioning
       const marker = new google.maps.Marker({
         position,
         map,
         title: title,
-        icon: {
-          url: iconUrl,
-          scaledSize: new google.maps.Size(64, 64),
-          anchor: new google.maps.Point(32, 32),
-        },
+        opacity: 0,
       });
 
-      // Create custom label above marker
+      // Create custom HTML marker + label
+      const markerEl = document.createElement("div");
+      markerEl.style.cssText = "position: absolute; display: flex; flex-direction: column; align-items: center; cursor: pointer; transform: translate(-50%, -100%);";
+
+      const imgContainer = document.createElement("div");
+      imgContainer.style.cssText = `
+        width: 54px; 
+        height: 54px; 
+        border-radius: 12px; 
+        border: 4px solid white; 
+        background: #ec4899; 
+        overflow: hidden; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 8px;
+        transition: transform 0.2s;
+      `;
+
+      if (event.image) {
+        const img = document.createElement("img");
+        img.src = event.image;
+        img.style.cssText = "width: 100%; height: 100%; object-fit: cover;";
+        img.onerror = () => { imgContainer.textContent = "📅"; };
+        imgContainer.appendChild(img);
+      } else {
+        imgContainer.textContent = "📅";
+        imgContainer.style.fontSize = "20px";
+      }
+
       const labelDiv = document.createElement("div");
-      labelDiv.className = "map-label";
       labelDiv.style.cssText = `
         background: linear-gradient(135deg, #ec4899, #f472b6);
         color: white;
@@ -254,34 +267,29 @@ export default function NearbyMapView({
         border-radius: 20px;
         white-space: nowrap;
         box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
-        pointer-events: none;
-        position: absolute;
-        z-index: 100;
       `;
       labelDiv.textContent = title.length > 20 ? title.substring(0, 18) + "..." : title;
 
+      markerEl.appendChild(imgContainer);
+      markerEl.appendChild(labelDiv);
+
+      markerEl.onmouseenter = () => imgContainer.style.transform = "scale(1.1)";
+      markerEl.onmouseleave = () => imgContainer.style.transform = "scale(1)";
+      markerEl.onclick = () => setSelectedMarker({ type: "event", data: event, position });
+
       const overlay = new google.maps.OverlayView();
-      overlay.onAdd = () => {
-        const pane = overlay.getPanes()!.overlayMouseTarget;
-        pane.appendChild(labelDiv);
-      };
+      overlay.onAdd = () => overlay.getPanes()!.overlayMouseTarget.appendChild(markerEl);
       overlay.draw = () => {
         const projection = overlay.getProjection();
         if (!projection) return;
         const pixel = projection.fromLatLngToDivPixel(position);
         if (pixel) {
-          labelDiv.style.left = (pixel.x - 40) + "px";
-          labelDiv.style.top = (pixel.y - 60) + "px";
+          markerEl.style.left = pixel.x + "px";
+          markerEl.style.top = pixel.y + "px";
         }
       };
-      overlay.onRemove = () => {
-        labelDiv.parentNode?.removeChild(labelDiv);
-      };
+      overlay.onRemove = () => markerEl.parentNode?.removeChild(markerEl);
       overlay.setMap(map);
-
-      marker.addListener("click", () => {
-        setSelectedMarker({ type: "event", data: event, position });
-      });
 
       markersRef.current.push(marker);
       bounds.extend(position);
