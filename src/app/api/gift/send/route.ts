@@ -1,10 +1,9 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
-export async function GET() {
+export async function POST(request: Request) {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get("accessToken")?.value;
 
@@ -16,31 +15,33 @@ export async function GET() {
   }
 
   try {
-    const decoded = jwt.decode(accessToken) as { id?: string } | null;
-    const userId = decoded?.id;
+    const body = await request.json();
+    const receiverIds = Array.isArray(body?.receiverIds) ? body.receiverIds : [];
+    const giftCardId = typeof body?.giftCardId === "string" ? body.giftCardId : "";
 
-    if (!userId) {
+    if (!giftCardId || receiverIds.length === 0) {
       return NextResponse.json(
-        { success: false, message: "Invalid token.", data: null },
-        { status: 401 }
+        { success: false, message: "Gift card ID and at least one receiver are required.", data: null },
+        { status: 400 }
       );
     }
 
-    const res = await fetch(`${BASE_URL}/users/${userId}`, {
-      method: "GET",
+    const res = await fetch(`${BASE_URL}/gift/send-gift`, {
+      method: "POST",
       headers: {
         Authorization: accessToken,
         "Content-Type": "application/json",
       },
+      body: JSON.stringify({ receiverIds, giftCardId }),
       cache: "no-store",
     });
 
     const result = await res.json();
     return NextResponse.json(result, { status: res.status });
   } catch (error) {
-    console.error("Failed to fetch user data:", error);
+    console.error("Failed to send gifts:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to fetch user data.", data: null },
+      { success: false, message: "Failed to send gifts.", data: null },
       { status: 500 }
     );
   }

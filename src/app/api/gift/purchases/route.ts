@@ -1,6 +1,5 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
@@ -16,17 +15,7 @@ export async function GET() {
   }
 
   try {
-    const decoded = jwt.decode(accessToken) as { id?: string } | null;
-    const userId = decoded?.id;
-
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, message: "Invalid token.", data: null },
-        { status: 401 }
-      );
-    }
-
-    const res = await fetch(`${BASE_URL}/users/${userId}`, {
+    const res = await fetch(`${BASE_URL}/gift/my-purchases-and-received-gifts`, {
       method: "GET",
       headers: {
         Authorization: accessToken,
@@ -38,9 +27,9 @@ export async function GET() {
     const result = await res.json();
     return NextResponse.json(result, { status: res.status });
   } catch (error) {
-    console.error("Failed to fetch user data:", error);
+    console.error("Failed to fetch purchased gifts:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to fetch user data.", data: null },
+      { success: false, message: "Failed to fetch purchased gifts.", data: null },
       { status: 500 }
     );
   }

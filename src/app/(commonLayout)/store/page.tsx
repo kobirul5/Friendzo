@@ -2,14 +2,18 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { 
-  BadgeDollarSign, 
-  Coins as CoinsIcon, 
-  Gift as GiftIcon, 
-  LoaderCircle, 
-  ShoppingCart
+import {
+  BadgeDollarSign,
+  Coins as CoinsIcon,
+  Gift as GiftIcon,
+  LoaderCircle,
+  ShoppingBag,
+  Send,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BuyGiftDialog } from "@/components/store/buy-gift-dialog";
+import { SendGiftDialog } from "@/components/store/send-gift-dialog";
 
 type CoinPackage = {
   id: string;
@@ -25,39 +29,88 @@ type GiftCard = {
   category: string;
 };
 
+type PurchasedGift = {
+  id: string;
+  giftCardId: string;
+  count: number;
+};
+
 const FALLBACK_IMAGE = "/fallback.jpg";
 
 export default function StorePage() {
   const [activeTab, setActiveTab] = useState<"coins" | "gifts">("coins");
   const [coins, setCoins] = useState<CoinPackage[]>([]);
   const [gifts, setGifts] = useState<GiftCard[]>([]);
-  const [userCoins, setUserCoins] = useState<number | null>(null);
+  const [userCoins, setUserCoins] = useState<number>(0);
+  const [purchasedGifts, setPurchasedGifts] = useState<PurchasedGift[]>([]);
+  const [totalPurchased, setTotalPurchased] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
+
+  // Gift dialog states
+  const [selectedGift, setSelectedGift] = useState<GiftCard | null>(null);
+  const [showBuyDialog, setShowBuyDialog] = useState(false);
+  const [showSendDialog, setShowSendDialog] = useState(false);
 
   const handleBuyCoin = async (coinId: string) => {
     setPurchasingId(coinId);
     try {
       const res = await fetch("/api/payment", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ coinId }),
       });
       const data = await res.json();
-      
       if (data?.data?.url) {
         window.location.href = data.data.url;
       } else {
-         console.error("No checkout url returned", data);
+        console.error("No checkout url returned", data);
       }
     } catch (error) {
       console.error("Purchase error:", error);
     } finally {
       setPurchasingId(null);
     }
+  };
+
+  const loadUserData = async () => {
+    try {
+      const [userRes] = await Promise.all([
+        fetch("/api/user/me", { cache: "no-store" }),
+      ]);
+      const userResult = await userRes.json();
+      if (userResult?.data?.totalCoins !== undefined) {
+        setUserCoins(userResult.data.totalCoins);
+      }
+    } catch (error) {
+      console.error("Load user data error:", error);
+    }
+  };
+
+  const loadPurchasedGifts = async () => {
+    try {
+      const res = await fetch("/api/gift/purchases", { cache: "no-store" });
+      const result = await res.json();
+      if (result?.data?.purchases) {
+        let purchases = result.data.purchases;
+        
+        // If the backend returns grouped categories (an object), flatten it into an array
+        if (!Array.isArray(purchases) && typeof purchases === 'object') {
+          purchases = Object.values(purchases).flat();
+        }
+        
+        setPurchasedGifts(purchases);
+        const total = purchases.reduce((sum: number, p: PurchasedGift) => sum + p.count, 0);
+        setTotalPurchased(total);
+      }
+    } catch (error) {
+      console.error("Load purchased gifts error:", error);
+    }
+  };
+
+  const refreshAll = async () => {
+    await Promise.all([loadUserData(), loadPurchasedGifts()]);
   };
 
   useEffect(() => {
@@ -74,13 +127,7 @@ export default function StorePage() {
           setGifts(Array.isArray(result?.data) ? result.data : []);
         }
 
-        if (userCoins === null) {
-          const userRes = await fetch("/api/user/me");
-          const userResult = await userRes.json();
-          if (userResult?.data?.totalCoins !== undefined) {
-            setUserCoins(userResult.data.totalCoins);
-          }
-        }
+        await refreshAll();
       } catch (error) {
         console.error("Store load error:", error);
       } finally {
@@ -88,7 +135,7 @@ export default function StorePage() {
       }
     }
     loadData();
-  }, [activeTab, userCoins]);
+  }, [activeTab]);
 
   const handleImageError = (id: string) => {
     setImageErrors((prev) => {
@@ -98,14 +145,44 @@ export default function StorePage() {
     });
   };
 
+  const getPurchasedCountForGift = (giftCardId: string) => {
+    const gift = purchasedGifts.find((p) => p.giftCardId === giftCardId);
+    return gift?.count || 0;
+  };
+
+  const handleBuyClick = (gift: GiftCard) => {
+    setSelectedGift(gift);
+    setShowBuyDialog(true);
+  };
+
+  const handleSendClick = (gift: GiftCard) => {
+    const count = getPurchasedCountForGift(gift.id);
+    if (count === 0) {
+      alert("You need to buy this gift first before sending!");
+      return;
+    }
+    setSelectedGift(gift);
+    setShowSendDialog(true);
+  };
+
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-12">
       {/* Page Header */}
-      <div className="relative flex flex-col mt-5   items-center justify-center space-y-4 pt-4 text-center">
-        {userCoins !== null && (
+      <div className="relative flex flex-col mt-5 items-center justify-center space-y-4 pt-4 text-center">
+        {userCoins > 0 && (
           <div className="absolute right-0 top-0 flex items-center gap-2 rounded-2xl bg-amber-100 px-5 py-2.5 text-amber-600 shadow-sm border border-amber-200">
             <CoinsIcon className="h-5 w-5" />
-            <span className="text-sm font-black uppercase tracking-wider">My Coins: <span className="text-lg">{userCoins}</span></span>
+            <span className="text-sm font-black uppercase tracking-wider">
+              My Coins: <span className="text-lg">{userCoins}</span>
+            </span>
+          </div>
+        )}
+        {totalPurchased > 0 && (
+          <div className="absolute left-0 top-0 flex items-center gap-2 rounded-2xl bg-green-100 px-5 py-2.5 text-green-600 shadow-sm border border-green-200">
+            <Wallet className="h-5 w-5" />
+            <span className="text-sm font-black uppercase tracking-wider">
+              Gifts: <span className="text-lg">{totalPurchased}</span>
+            </span>
           </div>
         )}
         <h1 className="text-4xl font-black tracking-tight text-foreground sm:text-5xl">Friendzo Store</h1>
@@ -114,7 +191,7 @@ export default function StorePage() {
         </p>
       </div>
 
-      {/* Tab Controls (Buttons that act as Tabs) */}
+      {/* Tab Controls */}
       <div className="flex justify-center p-1">
         <div className="inline-flex items-center rounded-2xl bg-white/60 p-1.5 shadow-[0_15px_45px_-15px_rgba(88,70,52,0.15)] backdrop-blur-md border border-white/60">
           <button
@@ -168,7 +245,7 @@ export default function StorePage() {
                       </div>
                       <p className="text-xl font-bold text-primary">${pkg.price.toFixed(2)}</p>
                     </div>
-                    <Button 
+                    <Button
                       onClick={() => handleBuyCoin(pkg.id)}
                       disabled={purchasingId === pkg.id}
                       className="mt-8 h-12 w-full rounded-2xl font-bold shadow-lg shadow-primary/20"
@@ -181,39 +258,53 @@ export default function StorePage() {
               </div>
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {gifts.map((gift) => (
-                  <div
-                    key={gift.id}
-                    className="group relative overflow-hidden rounded-[2.2rem] border border-black/5 bg-white shadow-[0_15px_45px_-30px_rgba(88,70,52,0.3)] transition-all hover:-translate-y-1 hover:shadow-[0_30px_60px_-25px_rgba(88,70,52,0.4)]"
-                  >
-                    <div className="relative aspect-square overflow-hidden">
-                      <Image
-                        src={(!imageErrors.has(gift.id) && gift.image) ? gift.image : FALLBACK_IMAGE}
-                        alt={gift.name}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-110"
-                        onError={() => handleImageError(gift.id)}
-                      />
-                      <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent opacity-60 transition-opacity group-hover:opacity-80" />
-                      <div className="absolute top-4 right-4 rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white backdrop-blur-md border border-white/30">
-                        {gift.category}
+                {gifts.map((gift) => {
+                  const purchasedCount = getPurchasedCountForGift(gift.id);
+                  return (
+                    <div
+                      key={gift.id}
+                      className="group relative overflow-hidden rounded-[2.2rem] border border-black/5 bg-white shadow-[0_15px_45px_-30px_rgba(88,70,52,0.3)] transition-all hover:-translate-y-1 hover:shadow-[0_30px_60px_-25px_rgba(88,70,52,0.4)]"
+                    >
+                      <div className="relative aspect-square overflow-hidden">
+                        <Image
+                          src={(!imageErrors.has(gift.id) && gift.image) ? gift.image : FALLBACK_IMAGE}
+                          alt={gift.name}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-110"
+                          onError={() => handleImageError(gift.id)}
+                        />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent opacity-60 transition-opacity group-hover:opacity-80" />
+                        <div className="absolute top-4 right-4 rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white backdrop-blur-md border border-white/30">
+                          {gift.category}
+                        </div>
+                        <div className="absolute inset-x-0 bottom-0 p-6 text-white">
+                          <h3 className="text-xl font-bold tracking-tight">{gift.name}</h3>
+                          <p className="mt-1 text-lg font-bold text-primary-foreground/90">{gift.price} coins</p>
+                        </div>
                       </div>
-                      <div className="absolute inset-x-0 bottom-0 p-6 text-white">
-                        <h3 className="text-xl font-bold tracking-tight">{gift.name}</h3>
-                        <p className="mt-1 text-lg font-bold text-primary-foreground/90">${gift.price.toFixed(2)}</p>
+                      <div className="space-y-2 p-4">
+                        <Button
+                          onClick={() => handleBuyClick(gift)}
+                          className="h-12 w-full rounded-2xl bg-primary font-bold text-white hover:bg-primary/90 transition-all"
+                        >
+                          <ShoppingBag className="mr-2 h-4 w-4" />
+                          Buy
+                        </Button>
+                        <Button
+                          onClick={() => handleSendClick(gift)}
+                          variant="outline"
+                          className="h-12 w-full rounded-2xl font-bold text-primary border-primary/20 hover:bg-primary/5 transition-all"
+                        >
+                          <Send className="mr-2 h-4 w-4" />
+                          Send Gift {purchasedCount > 0 && `(${purchasedCount})`}
+                        </Button>
                       </div>
                     </div>
-                    <div className="p-4">
-                       <Button variant="ghost" className="h-12 w-full rounded-2xl bg-primary/5 font-bold text-primary border border-primary/10 hover:bg-primary hover:text-white transition-all">
-                        <ShoppingCart className="mr-2 h-4 w-4" />
-                        Send as Gift
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
-            
+
             {((activeTab === "coins" && coins.length === 0) || (activeTab === "gifts" && gifts.length === 0)) && (
               <div className="flex h-64 flex-col items-center justify-center rounded-[2.5rem] border border-dashed border-primary/20 bg-white/40 p-8 text-center backdrop-blur-sm">
                 <p className="text-lg font-bold text-foreground">No items available yet</p>
@@ -223,6 +314,24 @@ export default function StorePage() {
           </div>
         )}
       </div>
+
+      {/* Dialogs */}
+      <BuyGiftDialog
+        gift={selectedGift}
+        userCoins={userCoins}
+        isOpen={showBuyDialog}
+        onClose={() => setShowBuyDialog(false)}
+        onSuccess={refreshAll}
+      />
+
+      <SendGiftDialog
+        gift={selectedGift}
+        purchasedCount={selectedGift ? getPurchasedCountForGift(selectedGift.id) : 0}
+        isOpen={showSendDialog}
+        onClose={() => setShowSendDialog(false)}
+        onSuccess={refreshAll}
+      />
     </div>
   );
 }
+
