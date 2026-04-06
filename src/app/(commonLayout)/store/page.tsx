@@ -31,6 +31,7 @@ export default function StorePage() {
   const [activeTab, setActiveTab] = useState<"coins" | "gifts">("coins");
   const [coins, setCoins] = useState<CoinPackage[]>([]);
   const [gifts, setGifts] = useState<GiftCard[]>([]);
+  const [userCoins, setUserCoins] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
@@ -72,6 +73,14 @@ export default function StorePage() {
           const result = await res.json();
           setGifts(Array.isArray(result?.data) ? result.data : []);
         }
+
+        if (userCoins === null) {
+          const userRes = await fetch("/api/user/me");
+          const userResult = await userRes.json();
+          if (userResult?.data?.totalCoins !== undefined) {
+            setUserCoins(userResult.data.totalCoins);
+          }
+        }
       } catch (error) {
         console.error("Store load error:", error);
       } finally {
@@ -79,7 +88,7 @@ export default function StorePage() {
       }
     }
     loadData();
-  }, [activeTab]);
+  }, [activeTab, userCoins]);
 
   const handleImageError = (id: string) => {
     setImageErrors((prev) => {
@@ -92,7 +101,13 @@ export default function StorePage() {
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-12">
       {/* Page Header */}
-      <div className="flex flex-col items-center justify-center space-y-4 pt-4 text-center">
+      <div className="relative flex flex-col mt-5   items-center justify-center space-y-4 pt-4 text-center">
+        {userCoins !== null && (
+          <div className="absolute right-0 top-0 flex items-center gap-2 rounded-2xl bg-amber-100 px-5 py-2.5 text-amber-600 shadow-sm border border-amber-200">
+            <CoinsIcon className="h-5 w-5" />
+            <span className="text-sm font-black uppercase tracking-wider">My Coins: <span className="text-lg">{userCoins}</span></span>
+          </div>
+        )}
         <h1 className="text-4xl font-black tracking-tight text-foreground sm:text-5xl">Friendzo Store</h1>
         <p className="max-w-2xl text-muted-foreground">
           Elevate your experience by getting coins or sending beautiful gift cards to your friends.

@@ -45,6 +45,7 @@ type ProfileData = {
   memories?: ProfileMemory[];
   event?: ProfileEvent[];
   isProfileComplete?: boolean;
+  totalCoins?: number;
 };
 
 export default async function ProfilePage() {
@@ -168,10 +169,22 @@ export default async function ProfilePage() {
               </div>
 
               {/* Stats Section */}
-              <div className="mt-10 grid grid-cols-2 gap-4">
+              <div className="mt-10 grid grid-cols-3 gap-4">
+                <div className="flex flex-col items-center justify-center gap-1 rounded-3xl bg-amber-50 p-5 transition-colors hover:bg-amber-100/80 border border-amber-100">
+                  <span className="text-2xl font-black text-amber-500">
+                    {profile.totalCoins || 0}
+                  </span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-amber-600/70">
+                    Coins
+                  </span>
+                </div>
                 <div className="flex flex-col items-center gap-1 rounded-3xl bg-muted/20 p-5 transition-colors hover:bg-primary/5">
                   <span className="text-2xl font-black text-primary">
-                    {(profile.followersCount / 1000000).toFixed(1)}M
+                    {profile.followersCount >= 1000000 
+                      ? (profile.followersCount / 1000000).toFixed(1) + 'M' 
+                      : profile.followersCount >= 1000 
+                        ? (profile.followersCount / 1000).toFixed(1) + 'k' 
+                        : profile.followersCount}
                   </span>
                   <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60">
                     Followers
@@ -179,7 +192,11 @@ export default async function ProfilePage() {
                 </div>
                 <div className="flex flex-col items-center gap-1 rounded-3xl bg-muted/20 p-5 transition-colors hover:bg-primary/5">
                   <span className="text-2xl font-black text-primary">
-                    {profile.followingsCount}
+                    {profile.followingsCount >= 1000000 
+                      ? (profile.followingsCount / 1000000).toFixed(1) + 'M' 
+                      : profile.followingsCount >= 1000 
+                        ? (profile.followingsCount / 1000).toFixed(1) + 'k' 
+                        : profile.followingsCount}
                   </span>
                   <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60">
                     Following
