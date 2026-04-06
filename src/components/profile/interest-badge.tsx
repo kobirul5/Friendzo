@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Image from "next/image";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,8 @@ export function InterestBadge({
   selected = false,
   onClick,
 }: InterestBadgeProps) {
+  const [imgError, setImgError] = useState(false);
+
   const baseClassName = cn(
     "group relative aspect-[0.92] w-full overflow-hidden rounded-[1.4rem] text-left transition-all",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
@@ -28,18 +31,13 @@ export function InterestBadge({
   const content = (
     <>
       <div className="absolute inset-0">
-        {image ? (
-          <Image
-            src={image}
-            alt={name}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,rgba(11,132,255,0.9),rgba(9,81,156,0.8))]">
-            <span className="text-4xl font-black text-white/95">{name.charAt(0)}</span>
-          </div>
-        )}
+        <Image
+          src={imgError || !image ? "/fallback.jpg" : image}
+          alt={name}
+          fill
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          onError={() => setImgError(true)}
+        />
       </div>
 
       <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/20 to-transparent" />

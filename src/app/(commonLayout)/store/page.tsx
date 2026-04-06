@@ -33,6 +33,31 @@ export default function StorePage() {
   const [gifts, setGifts] = useState<GiftCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+  const [purchasingId, setPurchasingId] = useState<string | null>(null);
+
+  const handleBuyCoin = async (coinId: string) => {
+    setPurchasingId(coinId);
+    try {
+      const res = await fetch("/api/payment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ coinId }),
+      });
+      const data = await res.json();
+      
+      if (data?.data?.url) {
+        window.location.href = data.data.url;
+      } else {
+         console.error("No checkout url returned", data);
+      }
+    } catch (error) {
+      console.error("Purchase error:", error);
+    } finally {
+      setPurchasingId(null);
+    }
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -128,8 +153,12 @@ export default function StorePage() {
                       </div>
                       <p className="text-xl font-bold text-primary">${pkg.price.toFixed(2)}</p>
                     </div>
-                    <Button className="mt-8 h-12 w-full rounded-2xl font-bold shadow-lg shadow-primary/20">
-                      Get Now
+                    <Button 
+                      onClick={() => handleBuyCoin(pkg.id)}
+                      disabled={purchasingId === pkg.id}
+                      className="mt-8 h-12 w-full rounded-2xl font-bold shadow-lg shadow-primary/20"
+                    >
+                      {purchasingId === pkg.id ? "Processing..." : "Get Now"}
                     </Button>
                     <div className="absolute -bottom-10 -right-10 h-32 w-32 rounded-full bg-primary/5 blur-3xl" />
                   </div>
