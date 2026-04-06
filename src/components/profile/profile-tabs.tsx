@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Grid, Gift, CalendarDays, Package, Inbox, LoaderCircle } from "lucide-react";
+import { Grid, Gift, CalendarDays, Package, Inbox, LoaderCircle, Send } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { MemoryCard } from "@/components/profile/memory-card";
+import { SendPurchasedGiftDialog } from "@/components/profile/send-purchased-gift-dialog";
 
 export type ProfileMemory = {
   id: string;
@@ -88,10 +91,13 @@ export function ProfileTabs({
   profileImage,
   isOwnProfile = false,
 }: ProfileTabsProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<ActiveTab>("memories");
   const [giftSection, setGiftSection] = useState<GiftSection>("purchased");
   const [giftCategory, setGiftCategory] = useState<string>("ALL");
   const [loading, setLoading] = useState(true);
+  const [selectedGift, setSelectedGift] = useState<ProfileGiftItem | null>(null);
+  const [showSendDialog, setShowSendDialog] = useState(false);
 
   useEffect(() => {
     if (activeTab === "gifts") {
@@ -103,6 +109,15 @@ export function ProfileTabs({
 
   const purchasedGiftsList = gifts?.purchases ? flattenGiftsByCategory(gifts.purchases, giftCategory) : [];
   const receivedGiftsList = gifts?.received ? flattenGiftsByCategory(gifts.received, giftCategory) : [];
+
+  const handleSendClick = (gift: ProfileGiftItem) => {
+    if (!isOwnProfile) {
+      toast.error("You can only send gifts from your own profile");
+      return;
+    }
+    setSelectedGift(gift);
+    setShowSendDialog(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -287,6 +302,16 @@ export function ProfileTabs({
                             <p className="text-xs text-muted-foreground mt-1">
                               {gift.category || ""} • {gift.price || 0} coins
                             </p>
+                            {isOwnProfile && (gift.count || 0) > 0 && (
+                              <Button
+                                onClick={() => handleSendClick(gift)}
+                                size="sm"
+                                className="w-full mt-2 h-8 text-xs rounded-lg"
+                              >
+                                <Send className="mr-1 h-3 w-3" />
+                                Send Gift
+                              </Button>
+                            )}
                           </CardContent>
                         </Card>
                       ))}
@@ -350,6 +375,25 @@ export function ProfileTabs({
           )}
         </div>
       ) : null}
+
+      {/* Send Gift Dialog */}
+      {isOwnProfile && selectedGift && (
+        <SendPurchasedGiftDialog
+          gift={{
+            id: selectedGift.id || "",
+            name: selectedGift.name || "",
+            image: selectedGift.image || "",
+            price: selectedGift.price || 0,
+            category: selectedGift.category || "",
+            count: selectedGift.count || 0,
+          }}
+          isOpen={showSendDialog}
+          onClose={() => setShowSendDialog(false)}
+          onSuccess={() => {
+            router.refresh();
+          }}
+        />
+      )}
     </div>
   );
 }
