@@ -57,7 +57,15 @@ export function SendGiftDialog({ gift, userCoins, isOpen, onClose, onSuccess }: 
     try {
       const res = await fetch("/api/network/friends");
       const data = await res.json();
-      setFriends(Array.isArray(data?.data) ? data.data : []);
+      let friendsList = [];
+      if (data?.data?.friends) {
+        friendsList = data.data.friends;
+      } else if (Array.isArray(data?.data)) {
+        friendsList = data.data;
+      }
+      
+      console.log("Parsed friends list:", friendsList);
+      setFriends(friendsList);
     } catch (error) {
       console.error("Load friends error:", error);
       toast.error("Failed to load friends");
