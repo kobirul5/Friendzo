@@ -7,6 +7,7 @@ import { CalendarDays, Flame, LoaderCircle, MapPin, Sparkles, TrendingUp, Users 
 
 import { FindFriendRequestButton } from "@/components/find-friend-request-button";
 import { Button } from "@/components/ui/button";
+import NearbyMapView, { MapUser, MapEvent } from "@/components/shared/nearby-map-view";
 
 type InterestItem = { name: string; image?: string | null };
 type DiscoverTab = "match" | "around" | "buzz";
@@ -20,6 +21,8 @@ type DiscoverUser = {
   interestPercentage?: number;
   distanceKm?: number;
   distanceInKm?: number;
+  lat?: number | null;
+  lng?: number | null;
   email?: string | null;
 };
 type TodayBuzzEvent = {
@@ -29,6 +32,8 @@ type TodayBuzzEvent = {
   image?: string | null;
   location?: string | null;
   distanceInKm?: number;
+  lat?: number | null;
+  lng?: number | null;
 };
 type ApiListResponse<T> = { success?: boolean; message?: string; data?: T };
 type TodayBuzzResponse = { todaysEvents?: TodayBuzzEvent[]; users?: DiscoverUser[] };
@@ -39,8 +44,6 @@ const TAB_OPTIONS: { key: DiscoverTab; label: string; icon: typeof Sparkles }[] 
   { key: "buzz", label: "Today's Buzz", icon: Flame },
 ];
 
-const FALLBACK_NEARBY_QUERY =
-  "lat=23.838795534051853&lng=90.38317015755169&minDistance=0&maxDistance=12";
 const FALLBACK_INTEREST_IMAGE = "/fallback.jpg";
 
 function getUserName(user: DiscoverUser) {
@@ -165,12 +168,14 @@ export default function DiscoverExperienceClient({ interests }: { interests: Int
   const [nearbyUsers, setNearbyUsers] = useState<DiscoverUser[]>([]);
   const [buzzUsers, setBuzzUsers] = useState<DiscoverUser[]>([]);
   const [buzzEvents, setBuzzEvents] = useState<TodayBuzzEvent[]>([]);
+  const [nearbyEvents, setNearbyEvents] = useState<TodayBuzzEvent[]>([]);
   const [isMatchLoading, setIsMatchLoading] = useState(false);
   const [isNearbyLoading, setIsNearbyLoading] = useState(false);
   const [isBuzzLoading, setIsBuzzLoading] = useState(false);
   const [matchMessage, setMatchMessage] = useState("");
   const [nearbyMessage, setNearbyMessage] = useState("");
   const [buzzMessage, setBuzzMessage] = useState("");
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [interestImageErrors, setInterestImageErrors] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -204,31 +209,48 @@ export default function DiscoverExperienceClient({ interests }: { interests: Int
     };
   }, [selectedInterest]);
 
+  // Fetch nearby users and events for "Around Me" tab using today-buzz API
   useEffect(() => {
     let ignore = false;
-    const loadNearbyUsers = async () => {
+    const loadAroundMe = async () => {
       setIsNearbyLoading(true);
       setNearbyMessage("");
       try {
-        const res = await fetch(`/api/network/discover?${FALLBACK_NEARBY_QUERY}`, { cache: "no-store" });
-        const result = (await res.json()) as ApiListResponse<DiscoverUser[]>;
+        const res = await fetch("/api/network/discover/today-buzz", { cache: "no-store" });
+        const result = (await res.json()) as ApiListResponse<TodayBuzzResponse>;
         if (ignore) return;
         if (!res.ok || result.success === false) {
           setNearbyUsers([]);
-          setNearbyMessage(result.message || "Nearby people could not be loaded.");
+          setNearbyEvents([]);
+          setNearbyMessage(result.message || "Nearby people and events could not be loaded.");
           return;
         }
-        setNearbyUsers(Array.isArray(result.data) ? result.data : []);
+
+        const users = Array.isArray(result.data?.users) ? result.data.users : [];
+        const events = Array.isArray(result.data?.todaysEvents) ? result.data.todaysEvents : [];
+
+        setNearbyUsers(users);
+        setNearbyEvents(events);
+
+        // Extract user location from first user with coordinates
+        const userWithLocation = users.find((u) => typeof u.lat === "number" && typeof u.lng === "number");
+        if (userWithLocation && !userLocation) {
+          setUserLocation({
+            lat: userWithLocation.lat as number,
+            lng: userWithLocation.lng as number,
+          });
+        }
       } catch (error) {
         if (ignore) return;
-        console.error("Failed to load nearby users:", error);
+        console.error("Failed to load around me data:", error);
         setNearbyUsers([]);
-        setNearbyMessage("Nearby people could not be loaded.");
+        setNearbyEvents([]);
+        setNearbyMessage("Nearby people and events could not be loaded.");
       } finally {
         if (!ignore) setIsNearbyLoading(false);
       }
     };
-    void loadNearbyUsers();
+    void loadAroundMe();
     return () => {
       ignore = true;
     };
@@ -393,25 +415,71 @@ export default function DiscoverExperienceClient({ interests }: { interests: Int
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/70">Nearby people</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/70">Nearby people & events</p>
               <h2 className="mt-2 text-2xl font-semibold text-foreground">Around me</h2>
-              <p className="mt-2 text-sm text-muted-foreground">People within your nearby distance window.</p>
+              <p className="mt-2 text-sm text-muted-foreground">People and events within your nearby distance window.</p>
             </div>
-            <div className="rounded-full bg-white/80 px-4 py-2 text-sm text-muted-foreground">{nearbyUsers.length} nearby profiles</div>
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-white/80 px-4 py-2 text-sm text-muted-foreground">
+                {nearbyUsers.length} people, {nearbyEvents.length} events
+              </div>
+            </div>
           </div>
           {showLoading ? (
             <div className="flex items-center justify-center rounded-[2rem] border border-white/70 bg-white/85 p-12">
               <LoaderCircle className="mr-2 h-5 w-5 animate-spin text-primary" />
-              <span className="text-sm text-muted-foreground">Finding nearby people...</span>
-            </div>
-          ) : nearbyUsers.length ? (
-            <div className="space-y-4">
-              {nearbyUsers.map((user) => (
-                <NearbyUserRow key={user.id} user={user} />
-              ))}
+              <span className="text-sm text-muted-foreground">Loading map...</span>
             </div>
           ) : (
-            <div className="rounded-[2rem] border border-dashed border-border/70 bg-white/80 p-10 text-center text-sm text-muted-foreground">{emptyMessage}</div>
+            <div className="space-y-6">
+              {/* Always show the map */}
+              <NearbyMapView
+                users={nearbyUsers as MapUser[]}
+                events={nearbyEvents as unknown as MapEvent[]}
+                isLoading={isNearbyLoading}
+                centerLat={userLocation?.lat}
+                centerLng={userLocation?.lng}
+              />
+
+              {/* Show list view below the map only if data exists */}
+              {(nearbyUsers.length > 0 || nearbyEvents.length > 0) && (
+                <>
+                  {/* Events Section */}
+                  {nearbyEvents.length > 0 && (
+                    <div>
+                      <h3 className="mb-3 text-lg font-semibold text-foreground flex items-center gap-2">
+                        <CalendarDays className="h-5 w-5 text-primary" />
+                        Nearby Events
+                      </h3>
+                      <div className="grid gap-4 lg:grid-cols-2">
+                        {nearbyEvents.map((event) => (
+                          <EventCard key={event.id} event={event} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* People Section */}
+                  {nearbyUsers.length > 0 && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                        <Users className="h-5 w-5 text-primary" />
+                        Nearby People
+                      </h3>
+                      {nearbyUsers.map((user) => (
+                        <NearbyUserRow key={user.id} user={user} />
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Show message if no data at all */}
+              {!nearbyUsers.length && !nearbyEvents.length && (
+                <div className="rounded-[2rem] border border-dashed border-border/70 bg-white/80 p-10 text-center text-sm text-muted-foreground">
+                  {emptyMessage || "No nearby people or events found. The map shows your current area."}
+                </div>
+              )}
+            </div>
           )}
         </div>
       ) : null}
