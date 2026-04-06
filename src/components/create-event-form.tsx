@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
@@ -83,6 +84,12 @@ export default function CreateEventForm() {
     typeof window !== "undefined"
       ? (window as Window & { google?: any }).google?.maps
       : undefined;
+
+  useEffect(() => {
+    if (googleMaps) {
+      setIsGoogleReady(true);
+    }
+  }, [googleMaps]);
 
   useEffect(() => {
     if (state?.success) {

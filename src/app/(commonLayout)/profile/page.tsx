@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getProfile } from "@/services/user/profile-service";
 import { logoutUser } from "@/services/auth/logout";
 import { cookies } from "next/headers";
