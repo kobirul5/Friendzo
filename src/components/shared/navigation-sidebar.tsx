@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   StoreIcon,
 } from "lucide-react";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export const navLinks = [
   { name: "Home", href: "/", icon: HomeIcon },
@@ -30,6 +31,7 @@ type NavigationSidebarProps = {
 
 export default function NavigationSidebar({ children }: NavigationSidebarProps) {
   const pathname = usePathname();
+  const userRole = useUserRole();
 
   return (
     <aside className="hidden xl:block">
@@ -39,7 +41,15 @@ export default function NavigationSidebar({ children }: NavigationSidebarProps) 
             Navigation
           </p>
           <div className="mt-4 space-y-2">
-            {navLinks.map((item) => {
+            {navLinks
+              .filter((item) => {
+                // Hide Admin link for non-admin users
+                if (item.name === "Admin" && userRole !== "ADMIN") {
+                  return false;
+                }
+                return true;
+              })
+              .map((item) => {
               const Icon = item.icon;
               // Home is active only on exact match; others match by prefix
               const isActive =

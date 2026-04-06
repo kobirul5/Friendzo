@@ -67,6 +67,10 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(new URL(getDefaultDashboardRoute(userRole), request.url))
     }
 
+    // Rule 1.5 : Admin trying to access user home page. Redirect to admin dashboard
+    if (accessToken && userRole === "ADMIN" && pathname === "/") {
+        return NextResponse.redirect(new URL("/admin/dashboard", request.url))
+    }
 
     // Rule 2 : User is trying to access open public route
     if (routerOwner === null) {
