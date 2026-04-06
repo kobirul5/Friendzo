@@ -109,11 +109,6 @@ export default async function Home() {
                     highlights who is online now.
                   </p>
                 </div>
-
-                <div className="flex w-full items-center gap-3 rounded-full border border-border/70 bg-muted/20 px-4 py-3 text-sm text-muted-foreground sm:max-w-xs">
-                  <Search className="h-4 w-4" />
-                  <span>Search friends, memories, events</span>
-                </div>
               </div>
 
               <div className="mt-5 flex flex-col gap-3 sm:flex-row">

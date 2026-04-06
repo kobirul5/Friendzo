@@ -305,10 +305,7 @@ export default function CreateEventForm() {
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
               Create a standout community event
             </h1>
-            <p className="mt-3 text-sm leading-7 text-muted-foreground sm:text-base">
-              Add a bold cover image, set the time, write the story, and pin the exact event
-              location directly on the map.
-            </p>
+            
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
@@ -450,61 +447,7 @@ export default function CreateEventForm() {
             </div>
 
             <div className="space-y-7">
-              <div className="rounded-[2rem] border border-white/70 bg-white/90 p-5 shadow-[0_20px_60px_-44px_rgba(88,70,52,0.4)] sm:p-6">
-                <div className="mb-5 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    <MapPin className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">Location</p>
-                    <p className="text-xs text-muted-foreground">Search or pick the exact place</p>
-                  </div>
-                </div>
 
-                <Field>
-                  <FieldLabel>Address</FieldLabel>
-                  <FieldContent>
-                    <Input
-                      name="address"
-                      type="text"
-                      placeholder="Search a place with Google"
-                      className="rounded-xl border-white/70 bg-muted/15"
-                      value={address}
-                      onChange={(event) => {
-                        setAddress(event.target.value);
-                        setCoordinates({ lat: "", lng: "" });
-                        setLocationMessage("Search the address again or pick a point on the map.");
-                      }}
-                      disabled={isPending}
-                    />
-                    <FieldDescription>Search a place to auto-fill latitude and longitude with Google.</FieldDescription>
-                  </FieldContent>
-                  <FieldError>{getFieldError("address")}</FieldError>
-                </Field>
-
-                <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleFindAddress}
-                    disabled={isPending || isResolvingAddress || !address.trim() || !googleMapsApiKey}
-                    className="rounded-full border-white/70 bg-white/80"
-                  >
-                    <Search className="h-4 w-4" />
-                    {isResolvingAddress ? "Searching..." : "Use Google location"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleUseCurrentLocation}
-                    disabled={isPending || isGettingLocation}
-                    className="rounded-full border-white/70 bg-white/80"
-                  >
-                    <LocateFixed className="h-4 w-4" />
-                    {isGettingLocation ? "Getting location..." : "Use current location"}
-                  </Button>
-                </div>
-              </div>
 
               <div className="rounded-[2rem] border border-white/70 bg-white/90 p-5 shadow-[0_20px_60px_-44px_rgba(88,70,52,0.4)] sm:p-6">
                 <Field>
@@ -544,6 +487,7 @@ export default function CreateEventForm() {
                 </div>
               </div>
             </div>
+
           </div>
 
           <input type="hidden" name="lat" value={coordinates.lat} />

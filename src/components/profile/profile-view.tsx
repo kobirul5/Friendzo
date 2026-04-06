@@ -8,9 +8,16 @@ import {
   Edit3,
   Info,
   Heart,
+  MoreHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { InterestGrid } from "@/components/profile/interest-grid";
 import {
   ProfileTabs,
@@ -114,10 +121,39 @@ export function ProfileView({
               ) : null}
 
               <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <h1 className="text-3xl font-black tracking-tight text-foreground">
-                    {displayName}
-                  </h1>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <h1 className="text-3xl font-black tracking-tight text-foreground">
+                      {displayName}
+                    </h1>
+                  </div>
+
+                  {!isOwnProfile && (
+                    <div className="flex items-center gap-2">
+                      <Button className="rounded-xl bg-primary px-6 font-semibold text-white hover:bg-primary/90">
+                        Follow
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="rounded-xl bg-primary/20 text-primary hover:bg-primary/30"
+                          >
+                            <MoreHorizontal className="h-5 w-5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40 rounded-2xl p-2 shadow-xl border-none">
+                          <DropdownMenuItem className="cursor-pointer rounded-xl text-primary focus:bg-primary/10 focus:text-primary">
+                            Block User
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="cursor-pointer rounded-xl text-primary focus:bg-primary/10 focus:text-primary">
+                            Report User
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-muted-foreground">
