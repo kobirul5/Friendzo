@@ -11,7 +11,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Search, Send, CheckCircle2, UserCheck } from "lucide-react";
+import { Search, Send, CheckCircle2, UserCheck, Coins } from "lucide-react";
+import { toast } from "sonner";
 
 type GiftCard = {
   id: string;
@@ -30,13 +31,13 @@ type Friend = {
 
 type SendGiftDialogProps = {
   gift: GiftCard | null;
-  purchasedCount: number;
+  userCoins: number;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
 };
 
-export function SendGiftDialog({ gift, purchasedCount, isOpen, onClose, onSuccess }: SendGiftDialogProps) {
+export function SendGiftDialog({ gift, userCoins, isOpen, onClose, onSuccess }: SendGiftDialogProps) {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [selectedFriends, setSelectedFriends] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
@@ -59,6 +60,7 @@ export function SendGiftDialog({ gift, purchasedCount, isOpen, onClose, onSucces
       setFriends(Array.isArray(data?.data) ? data.data : []);
     } catch (error) {
       console.error("Load friends error:", error);
+      toast.error("Failed to load friends");
     }
   };
 
@@ -77,17 +79,21 @@ export function SendGiftDialog({ gift, purchasedCount, isOpen, onClose, onSucces
   const handleSend = useCallback(async () => {
     if (!gift) return;
     if (selectedFriends.size === 0) {
-      alert("Please select at least one friend");
+      toast.error("Please select at least one friend");
       return;
     }
-    if (purchasedCount < selectedFriends.size) {
-      alert(`Not enough purchased gifts! You need ${selectedFriends.size} but only have ${purchasedCount}`);
+    
+    const totalCost = gift.price * selectedFriends.size;
+    if (userCoins < totalCost) {
+      toast.error("Not enough coins", {
+        description: `You need ${totalCost} coins but have ${userCoins} coins`,
+      });
       return;
     }
 
     setIsLoading(true);
     try {
-      const res = await fetch("/api/gift/send", {
+      const res = await fetch("/api/gift/send-coins", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -98,6 +104,7 @@ export function SendGiftDialog({ gift, purchasedCount, isOpen, onClose, onSucces
 
       if (res.ok) {
         setSuccess(true);
+        toast.success("Gifts sent successfully!");
         onSuccess();
         setTimeout(() => {
           onClose();
@@ -105,15 +112,15 @@ export function SendGiftDialog({ gift, purchasedCount, isOpen, onClose, onSucces
         }, 1500);
       } else {
         const data = await res.json();
-        alert(data.message || "Failed to send gift");
+        toast.error(data.message || "Failed to send gift");
       }
     } catch (error) {
       console.error("Send gift error:", error);
-      alert("Failed to send gift");
+      toast.error("Failed to send gift");
     } finally {
       setIsLoading(false);
     }
-  }, [gift, selectedFriends, purchasedCount, onSuccess, onClose]);
+  }, [gift, selectedFriends, userCoins, onSuccess, onClose]);
 
   const filteredFriends = friends.filter((friend) => {
     const name = `${friend.firstName} ${friend.lastName}`.toLowerCase();
@@ -121,6 +128,8 @@ export function SendGiftDialog({ gift, purchasedCount, isOpen, onClose, onSucces
   });
 
   if (!gift) return null;
+
+  const totalCost = gift.price * selectedFriends.size;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -137,16 +146,24 @@ export function SendGiftDialog({ gift, purchasedCount, isOpen, onClose, onSucces
           </div>
         ) : (
           <div className="space-y-4">
+            {/* Gift Info */}
             <div className="flex items-center gap-4 rounded-2xl bg-muted/30 p-4">
               <div className="relative h-16 w-16 overflow-hidden rounded-xl">
                 <Image src={gift.image} alt={gift.name} fill className="object-cover" />
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold">{gift.name}</h3>
-                <p className="text-sm text-muted-foreground">Available: {purchasedCount}</p>
+                <p className="text-sm text-muted-foreground">Price: {gift.price} coins each</p>
               </div>
             </div>
 
+            {/* User Coins */}
+            <div className="flex items-center gap-2 rounded-xl bg-primary/5 px-4 py-3">
+              <Coins className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium">Your Balance: {userCoins} coins</span>
+            </div>
+
+            {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -157,6 +174,7 @@ export function SendGiftDialog({ gift, purchasedCount, isOpen, onClose, onSucces
               />
             </div>
 
+            {/* Friends List */}
             <div className="max-h-64 overflow-y-auto space-y-2">
               {filteredFriends.length === 0 ? (
                 <p className="py-8 text-center text-muted-foreground">No friends found</p>
@@ -193,19 +211,36 @@ export function SendGiftDialog({ gift, purchasedCount, isOpen, onClose, onSucces
               )}
             </div>
 
+            {/* Selected Count & Total Cost */}
             {selectedFriends.size > 0 && (
-              <div className="rounded-xl bg-primary/5 px-4 py-3 text-center text-sm font-medium text-primary">
-                {selectedFriends.size} friend{selectedFriends.size > 1 ? "s" : ""} selected
+              <div className="rounded-xl bg-primary/5 px-4 py-3">
+                <div className="text-center text-sm font-medium text-primary">
+                  {selectedFriends.size} friend{selectedFriends.size > 1 ? "s" : ""} selected
+                </div>
+                <div className="text-center text-sm font-bold text-primary mt-1">
+                  Total: {totalCost} coins ({gift.price} × {selectedFriends.size})
+                </div>
+                {userCoins < totalCost && (
+                  <div className="text-center text-xs font-medium text-red-600 mt-2">
+                    Not enough coins. You need {totalCost - userCoins} more coins.
+                  </div>
+                )}
               </div>
             )}
 
+            {/* Actions */}
             <div className="flex gap-3">
-              <Button variant="outline" onClick={onClose} className="flex-1 rounded-xl" disabled={isLoading}>
+              <Button
+                variant="outline"
+                onClick={onClose}
+                className="flex-1 rounded-xl"
+                disabled={isLoading}
+              >
                 Cancel
               </Button>
               <Button
                 onClick={handleSend}
-                disabled={isLoading || selectedFriends.size === 0 || purchasedCount === 0}
+                disabled={isLoading || selectedFriends.size === 0 || userCoins < totalCost}
                 className="flex-1 rounded-xl bg-primary"
               >
                 <Send className="mr-2 h-4 w-4" />

@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Gift, ShoppingBag, Coins, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 import Image from "next/image";
 
 type GiftCard = {
@@ -35,21 +36,22 @@ export function BuyGiftDialog({ gift, userCoins, isOpen, onClose, onSuccess }: B
   const handleBuy = useCallback(async () => {
     if (!gift) return;
     if (userCoins < gift.price) {
-      alert("Not enough coins! Please purchase more coins first.");
+      toast.error("Not enough coins", {
+        description: `You need ${gift.price - userCoins} more coins to buy this gift`,
+      });
       return;
     }
 
     setIsLoading(true);
     try {
-      // Ensure category is uppercase to match backend enum
       const category = gift.category.toUpperCase();
-      
+
       const res = await fetch("/api/gift/buy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          giftCardId: gift.id, 
-          giftCategory: category 
+        body: JSON.stringify({
+          giftCardId: gift.id,
+          giftCategory: category
         }),
       });
 
@@ -58,18 +60,19 @@ export function BuyGiftDialog({ gift, userCoins, isOpen, onClose, onSuccess }: B
 
       if (res.ok) {
         setSuccess(true);
-        await onSuccess(); // Wait for refresh
+        toast.success("Gift purchased successfully!");
+        await onSuccess();
         setTimeout(() => {
           onClose();
           setSuccess(false);
         }, 1500);
       } else {
         console.error("Buy gift error response:", data);
-        alert(data.message || "Failed to purchase gift");
+        toast.error(data.message || "Failed to purchase gift");
       }
     } catch (error) {
       console.error("Buy gift error:", error);
-      alert("Failed to purchase gift");
+      toast.error("Failed to purchase gift");
     } finally {
       setIsLoading(false);
     }

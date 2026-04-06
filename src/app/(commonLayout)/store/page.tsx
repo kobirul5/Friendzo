@@ -157,11 +157,6 @@ export default function StorePage() {
   };
 
   const handleSendClick = (gift: GiftCard) => {
-    const count = getPurchasedCountForGift(gift.id);
-    if (count === 0) {
-      alert("You need to buy this gift first before sending!");
-      return;
-    }
     setSelectedGift(gift);
     setShowSendDialog(true);
   };
@@ -369,7 +364,7 @@ export default function StorePage() {
 
       <SendGiftDialog
         gift={selectedGift}
-        purchasedCount={selectedGift ? getPurchasedCountForGift(selectedGift.id) : 0}
+        userCoins={userCoins}
         isOpen={showSendDialog}
         onClose={() => setShowSendDialog(false)}
         onSuccess={refreshAll}
