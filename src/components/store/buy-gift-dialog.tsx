@@ -12,6 +12,7 @@ import {
 import { Gift, ShoppingBag, Coins, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
+import { formatCoins } from "@/lib/format-coins";
 
 type GiftCard = {
   id: string;
@@ -108,7 +109,7 @@ export function BuyGiftDialog({ gift, userCoins, isOpen, onClose, onSuccess }: B
 
             <div className="flex items-center gap-2 rounded-xl bg-primary/5 px-4 py-3">
               <Coins className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium">Your Balance: {userCoins} coins</span>
+              <span className="text-sm font-medium">Your Balance: {formatCoins(userCoins)} coins</span>
             </div>
 
             {userCoins < gift.price && (

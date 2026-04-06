@@ -4,6 +4,7 @@ import Image from "next/image";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 
 import { getProfile } from "@/services/user/profile-service";
+import { LogoutButton } from "@/components/profile/logout-button";
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
@@ -68,27 +69,30 @@ export default async function Layout({ children }: DashboardLayoutProps) {
               </h2>
             </div>
 
-            <div className="flex items-center justify-between gap-4 rounded-[1.5rem] bg-white/90 px-4 py-3 shadow-[0_18px_45px_-35px_rgba(95,76,55,0.35)] sm:justify-start">
-              <div className="relative h-12 w-12 overflow-hidden rounded-full bg-[linear-gradient(135deg,#ead8c2,#c7a783)]">
-                {user?.profileImage ? (
-                  <Image
-                    src={user.profileImage}
-                    alt={userName}
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-primary">
-                    {userInitial}
-                  </div>
-                )}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 rounded-[1.5rem] bg-white/90 px-4 py-3 shadow-[0_18px_45px_-35px_rgba(95,76,55,0.35)]">
+                <div className="relative h-12 w-12 overflow-hidden rounded-full bg-[linear-gradient(135deg,#ead8c2,#c7a783)]">
+                  {user?.profileImage ? (
+                    <Image
+                      src={user.profileImage}
+                      alt={userName}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-primary">
+                      {userInitial}
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-foreground">{userName}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {user?.email || userRole}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-foreground">{userName}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {user?.email || userRole}
-                </p>
-              </div>
+              <LogoutButton />
             </div>
           </header>
 

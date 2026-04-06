@@ -25,6 +25,7 @@ import {
   type ProfileEvent,
   type ProfileMemory,
 } from "@/components/profile/profile-tabs";
+import { formatCoins } from "@/lib/format-coins";
 
 type InterestDetail = {
   id: string;
@@ -178,7 +179,7 @@ export default async function ProfilePage() {
               <div className="mt-10 grid grid-cols-3 gap-4">
                 <div className="flex flex-col items-center justify-center gap-1 rounded-3xl bg-amber-50 p-5 transition-colors hover:bg-amber-100/80 border border-amber-100">
                   <span className="text-2xl font-black text-amber-500">
-                    {profile.totalCoins || 0}
+                    {formatCoins(profile.totalCoins || 0)}
                   </span>
                   <span className="text-xs font-bold uppercase tracking-widest text-amber-600/70">
                     Coins

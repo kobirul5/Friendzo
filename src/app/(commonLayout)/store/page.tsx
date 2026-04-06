@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { BuyGiftDialog } from "@/components/store/buy-gift-dialog";
 import { SendGiftDialog } from "@/components/store/send-gift-dialog";
+import { formatCoins } from "@/lib/format-coins";
 
 type CoinPackage = {
   id: string;
@@ -173,7 +174,7 @@ export default function StorePage() {
           <div className="absolute right-0 top-0 flex items-center gap-2 rounded-2xl bg-amber-100 px-5 py-2.5 text-amber-600 shadow-sm border border-amber-200">
             <CoinsIcon className="h-5 w-5" />
             <span className="text-sm font-black uppercase tracking-wider">
-              My Coins: <span className="text-lg">{userCoins}</span>
+              My Coins: <span className="text-lg">{formatCoins(userCoins)}</span>
             </span>
           </div>
         )}
