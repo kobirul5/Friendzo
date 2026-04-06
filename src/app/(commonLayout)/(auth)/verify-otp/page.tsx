@@ -12,24 +12,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { verifyOtp } from "@/services/auth/forgot-password";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { LucideShieldCheck, LucideArrowRight } from "lucide-react";
+import { toast } from "sonner";
 
 export default function VerifyOtpPage() {
   const [otp, setOtp] = useState("");
   const [email, setEmail] = useState("");
+  const [otpType, setOtpType] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
     const storedEmail = sessionStorage.getItem("resetEmail");
-    const otpType = sessionStorage.getItem("otpType");
+    const type = sessionStorage.getItem("otpType");
 
-    if (!storedEmail && !otpType) {
+    if (!storedEmail) {
       router.push("/foget-password");
-    } else {
-      setEmail(storedEmail || "");
+      return;
+    }
+
+    setEmail(storedEmail);
+    setOtpType(type);
+
+    // Redirect if otpType is missing (unknown flow)
+    if (!type) {
+      router.push("/foget-password");
     }
   }, [router]);
 
@@ -42,20 +50,31 @@ export default function VerifyOtpPage() {
     setLoading(true);
     setError("");
     console.log("DEBUG: SUBMITTING OTP FOR EMAIL:", email);
+    console.log("DEBUG: otpType from state:", otpType);
+    console.log("DEBUG: otpType from sessionStorage:", sessionStorage.getItem("otpType"));
     const res = await verifyOtp(email, otp);
 
     if (res.success) {
-      const otpType = sessionStorage.getItem("otpType");
-      if (otpType === "verify") {
+      const type = sessionStorage.getItem("otpType");
+      console.log("DEBUG: OTP verified, type is:", type);
+
+      if (type === "verify") {
         // Clear session storage and redirect to home
         sessionStorage.removeItem("resetEmail");
         sessionStorage.removeItem("otpType");
+        toast.success("Email verified successfully!");
         router.push("/");
       } else {
+        toast.success("Code verified successfully!", {
+          description: "You can now reset your password.",
+        });
         router.push("/reset-password");
       }
     } else {
       setError(res.message || "Invalid OTP or expired");
+      toast.error("Verification failed", {
+        description: res.message || "Invalid OTP or expired",
+      });
     }
     setLoading(false);
   };

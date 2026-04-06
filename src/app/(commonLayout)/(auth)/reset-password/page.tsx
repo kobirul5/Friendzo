@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { resetPassword } from "@/services/auth/forgot-password";
 import { useRouter } from "next/navigation";
 import { LucideLock, LucideArrowRight, LucideCheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
@@ -30,6 +31,7 @@ export default function ResetPasswordPage() {
     e.preventDefault();
     if (password !== confirmPassword) {
       setError("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
     setLoading(true);
@@ -39,11 +41,19 @@ export default function ResetPasswordPage() {
 
     if (res.success) {
       setSuccess(true);
+      sessionStorage.removeItem("resetEmail");
+      sessionStorage.removeItem("otpType");
+      toast.success("Password reset successfully!", {
+        description: "Your password has been updated.",
+      });
       setTimeout(() => {
         router.push("/login");
       }, 2000);
     } else {
       setError(res.message || "Failed to reset password");
+      toast.error("Failed to reset password", {
+        description: res.message || "Please try again.",
+      });
     }
     setLoading(false);
   };

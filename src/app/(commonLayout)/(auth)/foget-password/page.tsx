@@ -8,6 +8,7 @@ import { forgotPassword } from "@/services/auth/forgot-password";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { LucideMail, LucideArrowRight } from "lucide-react";
+import { toast } from "sonner";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -24,9 +25,16 @@ export default function ForgotPasswordPage() {
 
     if (res.success) {
       sessionStorage.setItem("resetEmail", email);
+      sessionStorage.setItem("otpType", "reset");
+      toast.success("Recovery code sent!", {
+        description: "Check your email for the verification code.",
+      });
       router.push("/verify-otp");
     } else {
       setError(res.message || "Something went wrong");
+      toast.error("Failed to send recovery code", {
+        description: res.message || "Please try again.",
+      });
     }
     setLoading(false);
   };
