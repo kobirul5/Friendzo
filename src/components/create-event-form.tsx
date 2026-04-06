@@ -17,6 +17,7 @@ import {
   Sparkles,
   Upload,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { createEvent } from "@/services/create-event";
 import { Button } from "@/components/ui/button";
@@ -137,8 +138,22 @@ export default function CreateEventForm() {
 
   useEffect(() => {
     if (state?.success) {
+      toast.success("Event created successfully!", {
+        description: "Your event has been published to the community.",
+      });
       router.push("/events");
       router.refresh();
+    } else if (state?.errors && state.errors.length > 0) {
+      const errorMessage = state.errors
+        .map((err: any) => err.message)
+        .join(", ");
+      toast.error("Failed to create event", {
+        description: errorMessage,
+      });
+    } else if (state?.message && !state.success) {
+      toast.error("Failed to create event", {
+        description: state.message,
+      });
     }
   }, [router, state]);
 

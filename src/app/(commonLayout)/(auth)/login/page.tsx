@@ -83,7 +83,7 @@ export default function LoginPage() {
                 </p>
               </div>
 
-              <LoginForm />
+              <LoginForm quickLoginUser={{ email: "kobirul7k@gmail.com", password: "123456789" }} quickLoginAdmin={{ email: "admin@gmail.com", password: "123456789" }} />
 
               <div className="pt-6 border-t border-border/50 text-center">
                 <p className="text-sm text-muted-foreground font-semibold">

@@ -18,6 +18,7 @@ import {
   Sparkles,
   Upload,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { createMemory } from "@/services/create-memory";
 import { Button } from "@/components/ui/button";
@@ -83,8 +84,22 @@ export default function CreateMemoryForm() {
   );
   useEffect(() => {
     if (state?.success) {
+      toast.success("Memory created successfully!", {
+        description: "Your moment has been shared to your feed.",
+      });
       router.push("/");
       router.refresh();
+    } else if (state?.errors && state.errors.length > 0) {
+      const errorMessage = state.errors
+        .map((err: any) => err.message)
+        .join(", ");
+      toast.error("Failed to create memory", {
+        description: errorMessage,
+      });
+    } else if (state?.message && !state.success) {
+      toast.error("Failed to create memory", {
+        description: state.message,
+      });
     }
   }, [router, state]);
 

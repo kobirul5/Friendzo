@@ -79,6 +79,10 @@ export const loginUser = async (_currentState: any, formData: any): Promise<any>
 
     } catch (error) {
         console.log(error, "User login failed");
+        return {
+            success: false,
+            message: "An unexpected error occurred. Please try again.",
+        };
     }
 }
 
