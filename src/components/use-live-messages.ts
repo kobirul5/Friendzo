@@ -74,6 +74,7 @@ export function useLiveMessages({
       setStatus("connected");
       ws.send(JSON.stringify({ event: "authenticate", token: accessToken }));
       ws.send(JSON.stringify({ event: "messageList" }));
+      ws.send(JSON.stringify({ event: "allFriends" })); // Get all friends with online status
     };
 
     ws.onmessage = (event) => {
@@ -103,6 +104,38 @@ export function useLiveMessages({
               lastSeen: current.find((c) => c.id === item.id)?.lastSeen ?? "Offline",
             }))
           );
+        }
+      }
+
+      //  Handle allFriends event - online users first
+      if (payload.event === "allFriends") {
+        const friends = payload.data?.friends ?? [];
+        const sortedFriends = friends.map((f: { user: { id: string; firstName?: string | null; lastName?: string | null; profileImage?: string | null }; isOnline: boolean }) => ({
+          id: f.user?.id || "",
+          name: buildName(f.user),
+          handle: f.user?.id ? `@${f.user.id.slice(-6)}` : "@friendzo",
+          role: "Friend",
+          active: f.isOnline,
+          lastSeen: f.isOnline ? "Active now" : "Offline",
+          preview: "Tap to start chatting",
+          unreadCount: 0,
+          accent: accentFor(f.user?.id || "friendzo"),
+          profileImage: f.user?.profileImage || null,
+        })).filter((item: LiveConversation) => item.id);
+
+        if (sortedFriends.length) {
+          setConversations((current) => {
+            // Merge with existing conversations, keeping online status from allFriends
+            const merged = sortedFriends.map((newItem: LiveConversation) => {
+              const existing = current.find((c) => c.id === newItem.id);
+              return {
+                ...newItem,
+                preview: existing?.preview || newItem.preview,
+                unreadCount: existing?.unreadCount || 0,
+              };
+            });
+            return merged;
+          });
         }
       }
 

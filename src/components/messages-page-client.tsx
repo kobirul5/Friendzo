@@ -223,13 +223,13 @@ export default function MessagesPageClient({
 
   return (
     <main className="h-[calc(100vh-4rem)] overflow-hidden bg-[radial-gradient(circle_at_top_left,#fff4e8_0%,#f6eadf_28%,#eadfd4_55%,#e0d5cb_100%)]">
-      <div className="mx-auto flex h-full w-full max-w-[1600px] flex-col overflow-hidden px-4 py-5 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-full w-full max-w-400 flex-col overflow-hidden px-4 py-5 sm:px-6 lg:px-8">
         <div className="grid flex-1 gap-5 overflow-hidden lg:min-h-0 lg:grid-cols-[360px_minmax(0,1fr)]">
           <aside className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/78 shadow-[0_30px_90px_-50px_rgba(88,70,52,0.42)] backdrop-blur-md lg:flex lg:min-h-0 lg:flex-col">
-            <div className="border-b border-border/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(250,243,236,0.9))] p-5">
+            <div className="border-b border-border/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(250,243,236,0.9))] p-5 pb-2">
             
               <div className="mt-5 rounded-[1.5rem] border border-border/70 bg-white/90 p-2 shadow-sm">
-                <div className="flex items-center gap-3 rounded-[1rem] px-3 py-2">
+                <div className="flex items-center gap-3 rounded-3xl px-3 py-2">
                   <Search className="h-4 w-4 text-muted-foreground" />
                   <Input
                     value={searchText}
@@ -260,7 +260,7 @@ export default function MessagesPageClient({
                 </span>
               </div>
 
-              <div className="mt-4">
+              <div className="mt-1">
 
 
                 <div
@@ -270,11 +270,11 @@ export default function MessagesPageClient({
                   onPointerMove={handleActiveUsersPointerMove}
                   onPointerUp={handleActiveUsersPointerUp}
                   onPointerCancel={handleActiveUsersPointerUp}
-                  className="-mx-1 overflow-x-auto py-2 select-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden cursor-grab active:cursor-grabbing"
+                  className="-mx-1 overflow-x-auto  select-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden cursor-grab active:cursor-grabbing"
                 >
-                  {activeConversations.length ? (
+                  {liveConversations.length ? (
                     <div className="flex min-w-max gap-3 px-1">
-                      {activeConversations.map((conversation) => {
+                      {liveConversations.map((conversation) => {
                         const isSelected = selectedConversation?.id === conversation.id;
 
                         return (
@@ -282,11 +282,11 @@ export default function MessagesPageClient({
                             key={conversation.id}
                             type="button"
                             onClick={() => setSelectedConversationId(conversation.id)}
-                            className="flex w-[88px] shrink-0 flex-col items-center gap-2 text-center"
+                            className="flex w-22 shrink-0 flex-col items-center gap-2 text-center"
                           >
                             <div
-                              className={`relative h-[52px] w-[52px] transition-all ${isSelected
-                                  ? "scale-[1.03] ring-4 ring-primary/25"
+                              className={`relative h-13 w-13 transition-all ${isSelected
+                                  ? "scale-[1.03] "
                                   : "ring-2 ring-transparent"
                                 }`}
                             >
@@ -294,11 +294,11 @@ export default function MessagesPageClient({
                                 <img
                                   src={conversation.profileImage}
                                   alt={conversation.name}
-                                  className="h-[52px] w-[52px] rounded-full object-cover"
+                                  className="h-13 w-13 rounded-full object-cover"
                                 />
                               ) : (
                                 <div
-                                  className={`flex h-[52px] w-[52px] items-center justify-center rounded-full bg-gradient-to-br ${conversation.accent} text-sm font-semibold text-slate-800`}
+                                  className={`flex h-13 w-13 items-center justify-center rounded-full bg-linear-to-br ${conversation.accent} text-sm font-semibold text-slate-800`}
                                 >
                                   {conversation.name
                                     .split(" ")
@@ -308,7 +308,9 @@ export default function MessagesPageClient({
                                     .join("")}
                                 </div>
                               )}
-                              <span className="absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-green-500" />
+                              {conversation.active && (
+                                <span className="absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-green-500" />
+                              )}
                             </div>
                             <span className="line-clamp-2 text-xs font-medium leading-4 text-foreground">
                               {conversation.name}
@@ -319,7 +321,7 @@ export default function MessagesPageClient({
                     </div>
                   ) : (
                     <p className="px-1 text-xs text-muted-foreground">
-                      No active user matched your search.
+                      No friends found.
                     </p>
                   )}
                 </div>
@@ -357,7 +359,7 @@ export default function MessagesPageClient({
                             />
                           ) : (
                             <div
-                              className={`flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br ${conversation.accent} text-sm font-semibold text-slate-800`}
+                              className={`flex h-14 w-14 items-center justify-center rounded-full bg-linear-to-br ${conversation.accent} text-sm font-semibold text-slate-800`}
                             >
                               {initials || "F"}
                             </div>
@@ -417,7 +419,7 @@ export default function MessagesPageClient({
                           />
                         ) : (
                           <div
-                            className={`flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br ${selectedConversation.accent} text-base font-semibold text-slate-800`}
+                            className={`flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br ${selectedConversation.accent} text-base font-semibold text-slate-800`}
                           >
                             {selectedConversation.name
                               .split(" ")
@@ -485,10 +487,10 @@ export default function MessagesPageClient({
                                     <img
                                       src={otherUser.profileImage}
                                       alt={otherUser.name}
-                                      className="h-full w-full object-cover"
+                                      className="h-full w-full object-cover rounded-full"
                                     />
                                   ) : (
-                                    <div className={`flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br ${otherUser?.accent || "from-sky-300 to-blue-100"} text-[10px] font-semibold text-slate-800`}>
+                                    <div className={`flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br ${otherUser?.accent || "from-sky-300 to-blue-100"} text-[10px] font-semibold text-slate-800`}>
                                       {otherUser?.name
                                         .split(" ")
                                         .filter(Boolean)
@@ -518,7 +520,7 @@ export default function MessagesPageClient({
                               {isMe && (
                                 <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full">
                                   {/* Your profile image could go here if you have it */}
-                                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary/40 to-primary/20 text-[10px] font-semibold text-primary">
+                                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-primary/40 to-primary/20 text-[10px] font-semibold text-primary">
                                     You
                                   </div>
                                 </div>
@@ -527,7 +529,7 @@ export default function MessagesPageClient({
                           );
                         })
                       ) : (
-                        <div className="flex h-full min-h-[220px] items-center justify-center rounded-[1.6rem] border border-dashed border-border/70 bg-white/70 p-6 text-center text-sm text-muted-foreground">
+                        <div className="flex h-full min-h-55 items-center justify-center rounded-[1.6rem] border border-dashed border-border/70 bg-white/70 p-6 text-center text-sm text-muted-foreground">
                           No messages yet. Send the first message to start this conversation.
                         </div>
                       )}
@@ -566,7 +568,7 @@ export default function MessagesPageClient({
                 </div>
               </div>
             ) : (
-              <div className="flex h-full min-h-[520px] items-center justify-center p-6">
+              <div className="flex h-full min-h-130 items-center justify-center p-6">
                 <div className="max-w-md rounded-[2rem] border border-dashed border-border/80 bg-white/80 p-8 text-center shadow-sm">
                   <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <MessageCircleMore className="h-8 w-8" />
