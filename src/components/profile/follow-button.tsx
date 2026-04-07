@@ -123,19 +123,13 @@ export function FollowButton({
   }, [targetUserId]);
 
   // Button rendering based on state
+
+  // If we are friends (mutually accepted) — no button, return null
   if (isFriend) {
-    return (
-      <Button
-        onClick={handleFollowAction}
-        disabled={isLoading}
-        className="rounded-xl bg-red-500 px-6 font-semibold text-white hover:bg-red-600"
-      >
-        <UserMinus className="mr-2 h-4 w-4" />
-        {isLoading ? "Removing..." : "Unfriend"}
-      </Button>
-    );
+    return null;
   }
 
+  // If I sent a follow request and it's pending — show "Cancel Request"
   if (hasPendingRequest) {
     return (
       <Button
@@ -148,6 +142,7 @@ export function FollowButton({
     );
   }
 
+  // If they sent me a request — show Accept/Reject
   if (isRequestReceived) {
     return (
       <div className="flex items-center gap-2">

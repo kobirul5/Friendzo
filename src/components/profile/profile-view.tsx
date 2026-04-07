@@ -156,6 +156,11 @@ export function ProfileView({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40 rounded-2xl p-2 shadow-xl border-none">
+                          {profile.isFriend && (
+                            <DropdownMenuItem className="cursor-pointer rounded-xl text-red-500 focus:bg-red-50 focus:text-red-600">
+                              Unfriend
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem className="cursor-pointer rounded-xl text-primary focus:bg-primary/10 focus:text-primary">
                             Block User
                           </DropdownMenuItem>
