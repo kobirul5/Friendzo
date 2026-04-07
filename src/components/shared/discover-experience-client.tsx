@@ -70,7 +70,7 @@ function UserHighlightCard({ user, badge }: { user: DiscoverUser; badge: string 
   return (
     <Link
       href={`/profile/${user.id}`}
-      className="group relative block min-w-[210px] overflow-hidden rounded-[1.8rem] border border-white/50 bg-muted/30 shadow-[0_20px_50px_-35px_rgba(88,70,52,0.45)]"
+      className="group relative block min-w-52.5 overflow-hidden rounded-[1.8rem] border border-white/50 bg-muted/30 shadow-[0_20px_50px_-35px_rgba(88,70,52,0.45)]"
     >
       <div className="relative aspect-[0.78]">
         {user.profileImage ? (
@@ -339,7 +339,7 @@ export default function DiscoverExperienceClient({ interests }: { interests: Int
                     setSelectedInterest(interest.name);
                     setActiveTab("match");
                   }}
-                  className={`group relative min-w-[150px] overflow-hidden rounded-[1.5rem] border text-left transition-transform hover:-translate-y-0.5 ${
+                  className={`group relative min-w-37.5 overflow-hidden rounded-[1.5rem] border text-left transition-transform hover:-translate-y-0.5 ${
                     isActive ? "border-primary/40 shadow-[0_18px_35px_-28px_rgba(88,70,52,0.6)]" : "border-white/55"
                   }`}
                 >

@@ -221,7 +221,7 @@ export default function StorePage() {
       </div>
 
       {/* Content Area */}
-      <div className="min-h-[500px]">
+      <div className="min-h-125">
         {loading ? (
           <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-[2.5rem] border border-white/60 bg-white/40 backdrop-blur-sm">
             <LoaderCircle className="h-10 w-10 animate-spin text-primary" />

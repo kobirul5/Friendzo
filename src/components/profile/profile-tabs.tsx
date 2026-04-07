@@ -204,14 +204,14 @@ export function ProfileTabs({
                   </div>
 
                   {/* Image */}
-                  <div className="relative aspect-[4/3] w-full overflow-hidden">
+                  <div className="relative aspect-4/3 w-full overflow-hidden">
                     <Image
                       src={item.image}
                       alt={item.title || "Event"}
                       fill
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
                   </div>
 
                   {/* Content */}

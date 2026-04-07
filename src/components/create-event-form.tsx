@@ -319,7 +319,7 @@ export default function CreateEventForm() {
         <div className="flex items-start justify-between gap-6">
           <div>
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br from-primary/20 to-primary/10">
                 <CalendarDays className="h-6 w-6 text-primary" />
               </div>
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
@@ -451,7 +451,7 @@ export default function CreateEventForm() {
                         name="description"
                         required
                         placeholder="Tell people what makes this event special..."
-                        className="min-h-[140px] rounded-lg"
+                        className="min-h-35 rounded-lg"
                         disabled={isPending}
                       />
                       <FieldDescription>Describe the event, activities, and who should attend.</FieldDescription>
@@ -509,7 +509,7 @@ export default function CreateEventForm() {
                 <div className="mb-4 overflow-hidden rounded-xl border border-border/60">
                   <div
                     ref={mapRef}
-                    className="h-[320px] w-full bg-muted sm:h-[380px]"
+                    className="h-80 w-full bg-muted sm:h-95"
                   />
                 </div>
 

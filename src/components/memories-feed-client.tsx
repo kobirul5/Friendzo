@@ -139,7 +139,7 @@ function LikesModal({
           </Button>
         </div>
 
-        <div className="mt-6 max-h-[24rem] space-y-3 overflow-y-auto pr-1">
+        <div className="mt-6 max-h-96 space-y-3 overflow-y-auto pr-1">
           {isLoading ? (
             <div className="flex items-center justify-center py-10 text-muted-foreground">
               <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
@@ -227,9 +227,9 @@ function FeedCard({
             className="block max-h-[75vh] w-full object-cover"
           />
         ) : (
-          <div className="min-h-[360px] w-full" />
+          <div className="min-h-90 w-full" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-white/10" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/20 to-white/10" />
 
         <div className="absolute inset-0 flex flex-col justify-between p-7">
           <div className="flex items-start justify-between gap-4">
@@ -720,7 +720,7 @@ export default function MemoriesFeedClient({
               </div>
             ) : null}
 
-            <div className="mt-6 max-h-[24rem] space-y-3 overflow-y-auto pr-1">
+            <div className="mt-6 max-h-96 space-y-3 overflow-y-auto pr-1">
               {isCommentsLoading ? (
                 <div className="flex items-center justify-center py-10 text-muted-foreground">
                   <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />

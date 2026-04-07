@@ -10,13 +10,14 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   LoaderCircle,
-  LocateFixed,
   Map,
   MapPin,
-  Image as ImageIcon,
-  Search,
-  Sparkles,
+  ImagePlus,
   Upload,
+  X,
+  CheckCircle2,
+  Navigation,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -72,7 +73,7 @@ export default function CreateMemoryForm() {
   const markerRef = useRef<any>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [isResolvingAddress, setIsResolvingAddress] = useState(false);
-  const [isGoogleReady, setIsGoogleReady] = useState(() => 
+  const [isGoogleReady, setIsGoogleReady] = useState(() =>
     typeof window !== "undefined" && !!window.google?.maps
   );
   const [address, setAddress] = useState("");
@@ -82,6 +83,7 @@ export default function CreateMemoryForm() {
   const [locationMessage, setLocationMessage] = useState(
     "Search an address, use your current location, or click on the map to pick a place."
   );
+
   useEffect(() => {
     if (state?.success) {
       toast.success("Memory created successfully!", {
@@ -110,9 +112,8 @@ export default function CreateMemoryForm() {
         return;
       }
 
-      const geocoder = new google.maps.Geocoder();
-
-      geocoder.geocode(request, (results: any, status: any) => {
+      const geocoder = new google.maps.Geocoder() as GoogleMapsGeocoder;
+      geocoder.geocode(request, (results, status) => {
         if (status === "OK" && results?.length) {
           resolve(results);
           return;
@@ -127,7 +128,7 @@ export default function CreateMemoryForm() {
     lng: number,
     updateMessage = true
   ) => {
-    if (!googleMapsApiKey || !isGoogleReady) {
+    if (!isGoogleReady) {
       return;
     }
 
@@ -148,7 +149,15 @@ export default function CreateMemoryForm() {
         setLocationMessage("Coordinates saved, but address could not be resolved.");
       }
     }
-  }, [googleMapsApiKey, isGoogleReady, geocodeWithGoogle]);
+  }, [isGoogleReady, geocodeWithGoogle]);
+
+  const updateMapLocation = useCallback((lat: number, lng: number) => {
+    const nextPoint = { lat, lng };
+
+    googleMapRef.current?.setCenter(nextPoint);
+    googleMapRef.current?.setZoom(15);
+    markerRef.current?.setPosition(nextPoint);
+  }, []);
 
   useEffect(() => {
     if (!isGoogleReady || !mapRef.current || !google.maps.Map || googleMapRef.current) {
@@ -190,16 +199,16 @@ export default function CreateMemoryForm() {
     });
   }, [isGoogleReady, resolveAddressFromCoordinates]);
 
+  useEffect(() => {
+    return () => {
+      if (imagePreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
+
   const getFieldError = (fieldName: string) =>
     state?.errors?.find((error: any) => error.field === fieldName)?.message ?? null;
-
-  const updateMapLocation = useCallback((lat: number, lng: number) => {
-    const nextPoint = { lat, lng };
-
-    googleMapRef.current?.setCenter(nextPoint);
-    googleMapRef.current?.setZoom(15);
-    markerRef.current?.setPosition(nextPoint);
-  }, []);
 
   const handleFindAddress = async () => {
     if (!address.trim()) {
@@ -218,15 +227,13 @@ export default function CreateMemoryForm() {
 
       const results = await geocodeWithGoogle({ address: address.trim() });
       const firstResult = results[0];
-      const lat = firstResult.geometry.location.lat();
-      const lng = firstResult.geometry.location.lng();
 
       setCoordinates({
-        lat: String(lat),
-        lng: String(lng),
+        lat: String(firstResult.geometry.location.lat()),
+        lng: String(firstResult.geometry.location.lng()),
       });
       setAddress(firstResult.formatted_address);
-      updateMapLocation(lat, lng);
+      updateMapLocation(firstResult.geometry.location.lat(), firstResult.geometry.location.lng());
       setLocationMessage("Google location added successfully.");
     } catch {
       setCoordinates({ lat: "", lng: "" });
@@ -245,31 +252,31 @@ export default function CreateMemoryForm() {
     setIsGettingLocation(true);
     setLocationMessage("Fetching your current location...");
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const nextCoordinates = {
+        lat: String(position.coords.latitude),
+        lng: String(position.coords.longitude),
+      };
 
-        setCoordinates({
-          lat: String(lat),
-          lng: String(lng),
-        });
-        updateMapLocation(lat, lng);
+      setCoordinates(nextCoordinates);
+      updateMapLocation(position.coords.latitude, position.coords.longitude);
 
-        if (googleMapsApiKey && isGoogleReady) {
-          await resolveAddressFromCoordinates(lat, lng, false);
+      if (googleMapsApiKey && isGoogleReady) {
+        try {
+          await resolveAddressFromCoordinates(position.coords.latitude, position.coords.longitude, false);
           setLocationMessage("Current location added from Google.");
-        } else {
-          setLocationMessage("Coordinates added from your browser location.");
+        } catch {
+          setLocationMessage("Coordinates added, but Google could not detect the address.");
         }
-
-        setIsGettingLocation(false);
-      },
-      () => {
-        setIsGettingLocation(false);
-        setLocationMessage("Unable to access your current location.");
+      } else {
+        setLocationMessage("Coordinates added from your browser location.");
       }
-    );
+
+      setIsGettingLocation(false);
+    }, () => {
+      setIsGettingLocation(false);
+      setLocationMessage("Unable to access your current location.");
+    });
   };
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -286,8 +293,10 @@ export default function CreateMemoryForm() {
     });
   };
 
+  const isFormValid = coordinates.lat && coordinates.lng && imagePreview;
+
   return (
-    <div className="overflow-hidden rounded-[2.25rem] border border-white/60 bg-white/82 shadow-[0_30px_90px_-48px_rgba(88,70,52,0.42)] backdrop-blur-md">
+    <div className="mx-auto max-w-6xl">
       {googleMapsApiKey ? (
         <Script
           src={`https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}`}
@@ -296,93 +305,95 @@ export default function CreateMemoryForm() {
         />
       ) : null}
 
-      <div className="border-b border-border/60 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.95),rgba(244,235,225,0.92),rgba(235,224,213,0.88))] px-6 py-8 sm:px-8 sm:py-10">
+      {/* Header */}
+      <div className="mb-8">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          className="group mb-4 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back home
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+          Back to home
         </Link>
-        <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary/75">
-              New memory
-            </p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-              Turn a moment into a beautiful post
+        <div className="flex items-start justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br from-primary/20 to-primary/10">
+                <Sparkles className="h-6 w-6 text-primary" />
+              </div>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
+                New Memory
+              </p>
+            </div>
+            <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Capture a moment
             </h1>
-            <p className="mt-3 text-sm leading-7 text-muted-foreground sm:text-base">
-              Upload a bold image, write a story, and pin the exact place on the map so your
-              memory feels real and discoverable.
+            <p className="mt-2 text-base text-muted-foreground">
+              Share your story with an image, description, and location.
             </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-white/70 bg-white/75 px-4 py-3 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
-                Visual
-              </p>
-              <p className="mt-2 text-sm font-medium text-foreground">Large image preview</p>
-            </div>
-            <div className="rounded-2xl border border-white/70 bg-white/75 px-4 py-3 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
-                Location
-              </p>
-              <p className="mt-2 text-sm font-medium text-foreground">Google map selection</p>
-            </div>
-            <div className="rounded-2xl border border-white/70 bg-white/75 px-4 py-3 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
-                Feed
-              </p>
-              <p className="mt-2 text-sm font-medium text-foreground">Ready for your homepage</p>
-            </div>
           </div>
         </div>
       </div>
 
-      <form action={formAction} className="space-y-8 px-6 py-8 sm:px-8 sm:py-10">
+      <form action={formAction}>
         <FieldGroup>
-          <div className="grid gap-8 xl:grid-cols-[1.05fr_0.95fr]">
-            <div className="space-y-7">
-              <div className="rounded-[2rem] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(248,243,237,0.88))] p-5 shadow-[0_20px_60px_-44px_rgba(88,70,52,0.42)] sm:p-6">
+          <div className="grid gap-8 lg:grid-cols-5">
+            {/* Left Column - Main Details */}
+            <div className="space-y-6 lg:col-span-3">
+              {/* Image Upload */}
+              <section className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
                 <div className="mb-5 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    <ImageIcon className="h-5 w-5" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <ImagePlus className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Visual cover</p>
-                    <p className="text-xs text-muted-foreground">Make the post stand out in the feed</p>
+                    <h2 className="text-base font-semibold text-foreground">Cover Image</h2>
+                    <p className="text-xs text-muted-foreground">Upload a captivating image for your memory</p>
                   </div>
                 </div>
+
                 <Field>
-                  <FieldLabel>
-                    Memory image <span className="text-red-500">*</span>
-                  </FieldLabel>
                   <FieldContent>
-                    <label className="flex cursor-pointer flex-col items-center justify-center rounded-[1.5rem] border border-dashed border-primary/25 bg-primary/5 px-6 py-8 text-center transition-colors hover:border-primary/40 hover:bg-primary/10">
+                    <label className="group relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-border/70 bg-muted/20 px-6 py-12 text-center transition-all hover:border-primary/40 hover:bg-primary/5">
                       {imagePreview ? (
-                        <div className="mb-4 w-full overflow-hidden rounded-[1.5rem] border border-white/70 shadow-sm">
+                        <div className="relative h-64 w-full sm:h-72">
                           <img
                             src={imagePreview}
-                            alt="Selected memory preview"
-                            className="h-72 w-full object-cover sm:h-96"
+                            alt="Memory cover preview"
+                            className="h-full w-full rounded-lg object-cover"
                           />
+                          {/* Remove button */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setImagePreview(null);
+                              setSelectedImageName("");
+                            }}
+                            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-black/80"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                          {/* Success indicator */}
+                          <div className="absolute bottom-3 left-3 flex items-center gap-2 rounded-full bg-green-600/90 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Image uploaded
+                          </div>
                         </div>
                       ) : (
-                        <div className="mb-4 flex h-72 w-full items-center justify-center rounded-[1.5rem] bg-primary/8 sm:h-96">
-                          <Upload className="h-10 w-10 text-primary" />
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+                            <Upload className="h-7 w-7 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">
+                              Click to upload your cover image
+                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              JPG, PNG or WEBP — Recommended: 1200×630px
+                            </p>
+                          </div>
                         </div>
                       )}
-                      <span className="text-sm font-semibold text-foreground">Choose an image</span>
-                      <span className="mt-1 text-sm text-muted-foreground">
-                        JPG, PNG or WEBP image for your memory post
-                      </span>
-                      {selectedImageName ? (
-                        <span className="mt-3 rounded-full bg-white px-3 py-1 text-xs font-medium text-foreground shadow-sm">
-                          {selectedImageName}
-                        </span>
-                      ) : null}
                       <Input
                         name="image"
                         type="file"
@@ -393,22 +404,23 @@ export default function CreateMemoryForm() {
                         onChange={handleImageChange}
                       />
                     </label>
-                    <FieldDescription>Your photo will be uploaded with the post.</FieldDescription>
                   </FieldContent>
                   <FieldError>{getFieldError("image")}</FieldError>
                 </Field>
-              </div>
+              </section>
 
-              <div className="rounded-[2rem] border border-white/70 bg-white/90 p-5 shadow-[0_20px_60px_-44px_rgba(88,70,52,0.4)] sm:p-6">
+              {/* Description */}
+              <section className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
                 <div className="mb-5 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <Sparkles className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Story</p>
-                    <p className="text-xs text-muted-foreground">Add a short caption for context</p>
+                    <h2 className="text-base font-semibold text-foreground">Your Story</h2>
+                    <p className="text-xs text-muted-foreground">Tell people about this memory</p>
                   </div>
                 </div>
+
                 <Field>
                   <FieldLabel>
                     Description <span className="text-red-500">*</span>
@@ -417,113 +429,107 @@ export default function CreateMemoryForm() {
                     <Textarea
                       name="description"
                       required
-                      placeholder="Write something about this memory..."
-                      className="min-h-40 rounded-[1.5rem] border-white/70 bg-muted/15"
+                      placeholder="Write something about this moment..."
+                      className="min-h-40 rounded-lg"
                       disabled={isPending}
                     />
-                    <FieldDescription>A short caption for your memory card.</FieldDescription>
+                    <FieldDescription>Share the story behind this memory.</FieldDescription>
                   </FieldContent>
                   <FieldError>{getFieldError("description")}</FieldError>
                 </Field>
-              </div>
+              </section>
             </div>
 
-            <div className="space-y-7">
-              <div className="rounded-[2rem] border border-white/70 bg-white/90 p-5 shadow-[0_20px_60px_-44px_rgba(88,70,52,0.4)] sm:p-6">
+            {/* Right Column - Map */}
+            <div className="space-y-6 lg:col-span-2">
+              <section className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
                 <div className="mb-5 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    <MapPin className="h-5 w-5" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Map className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Location</p>
-                    <p className="text-xs text-muted-foreground">Search or pick the exact place</p>
+                    <h2 className="text-base font-semibold text-foreground">Location</h2>
+                    <p className="text-xs text-muted-foreground">Where did this memory happen?</p>
                   </div>
                 </div>
 
-                <Field>
-                  <FieldLabel>Address</FieldLabel>
-                  <FieldContent>
-                    <Input
-                      name="address"
-                      type="text"
-                      placeholder="Search a place with Google"
-                      className="rounded-xl border-white/70 bg-muted/15"
-                      value={address}
-                      onChange={(event) => {
-                        setAddress(event.target.value);
-                        setCoordinates({ lat: "", lng: "" });
-                        setLocationMessage("Search the address again or pick a point on the map.");
-                      }}
-                      disabled={isPending}
-                    />
-                    <FieldDescription>
-                      Search a place to auto-fill latitude and longitude with Google.
-                    </FieldDescription>
-                  </FieldContent>
-                  <FieldError>{getFieldError("address")}</FieldError>
-                </Field>
+                {/* Map Container */}
+                <div className="mb-4 overflow-hidden rounded-xl border border-border/60">
+                  <div
+                    ref={mapRef}
+                    className="h-80 w-full bg-muted sm:h-95"
+                  />
+                </div>
 
-                <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                {/* Location Controls */}
+                <div className="mb-4 flex gap-2">
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={handleFindAddress}
-                    disabled={isPending || isResolvingAddress || !address.trim() || !googleMapsApiKey}
-                    className="rounded-full border-white/70 bg-white/80"
-                  >
-                    <Search className="h-4 w-4" />
-                    {isResolvingAddress ? "Searching..." : "Use Google location"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
+                    size="sm"
                     onClick={handleUseCurrentLocation}
-                    disabled={isPending || isGettingLocation}
-                    className="rounded-full border-white/70 bg-white/80"
+                    disabled={isGettingLocation || isPending}
+                    className="flex-1 rounded-lg text-xs"
                   >
-                    <LocateFixed className="h-4 w-4" />
-                    {isGettingLocation ? "Getting location..." : "Use current location"}
+                    {isGettingLocation ? (
+                      <LoaderCircle className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Navigation className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    My Location
                   </Button>
                 </div>
-              </div>
 
-              <div className="rounded-[2rem] border border-white/70 bg-white/90 p-5 shadow-[0_20px_60px_-44px_rgba(88,70,52,0.4)] sm:p-6">
-                <Field>
-                  <FieldLabel>
-                    Pick location on map <span className="text-red-500">*</span>
-                  </FieldLabel>
-                  <FieldContent>
-                    <div className="overflow-hidden rounded-[1.5rem] border border-primary/15 bg-white shadow-sm">
-                      <div className="flex items-center gap-2 border-b border-border/70 bg-primary/5 px-4 py-3 text-sm font-medium text-foreground">
-                        <Map className="h-4 w-4 text-primary" />
-                        Google map picker
-                      </div>
-                      <div
-                        ref={mapRef}
-                        className="h-[380px] w-full bg-[linear-gradient(135deg,rgba(236,227,217,0.85),rgba(249,246,241,0.95))] sm:h-[460px]"
-                      />
-                    </div>
-                    <FieldDescription>
-                      Click anywhere on the map to select a location and save its latitude and longitude.
-                    </FieldDescription>
-                  </FieldContent>
-                  <FieldError>{getFieldError("lat") || getFieldError("lng")}</FieldError>
-                </Field>
-
-                <div className="mt-5 rounded-[1.5rem] border border-primary/10 bg-primary/5 p-5">
-                  <div className="flex items-start gap-3 text-sm text-muted-foreground">
-                    <MapPin className="mt-0.5 h-4 w-4 text-primary" />
-                    <div className="space-y-1">
-                      <p>{locationMessage}</p>
-                      <p className="text-xs">
-                        {coordinates.lat && coordinates.lng
-                          ? `Lat: ${coordinates.lat} | Lng: ${coordinates.lng}`
-                          : "No coordinates selected yet."}
-                      </p>
+                {/* Location Status */}
+                <div className={`rounded-xl border p-4 transition-colors ${
+                  coordinates.lat && coordinates.lng
+                    ? "border-green-200 bg-green-50/50"
+                    : "border-border/60 bg-muted/30"
+                }`}>
+                  <div className="flex items-start gap-3">
+                    <MapPin className={`mt-0.5 h-4 w-4 shrink-0 ${
+                      coordinates.lat && coordinates.lng ? "text-green-600" : "text-muted-foreground"
+                    }`} />
+                    <div className="space-y-1.5">
+                      <p className="text-sm font-medium text-foreground">{locationMessage}</p>
+                      {coordinates.lat && coordinates.lng ? (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground/80">
+                          <span className="rounded-md bg-white/80 px-2 py-1 font-mono">
+                            {parseFloat(coordinates.lat).toFixed(4)}
+                          </span>
+                          <span className="text-muted-foreground/40">,</span>
+                          <span className="rounded-md bg-white/80 px-2 py-1 font-mono">
+                            {parseFloat(coordinates.lng).toFixed(4)}
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground/70">
+                          Click on the map or use your current location
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
-              </div>
+              </section>
+
+              {/* Quick Tips */}
+              <section className="rounded-2xl border border-amber-200/50 bg-amber-50/50 p-5">
+                <h3 className="mb-3 text-sm font-semibold text-amber-800">Quick Tips</h3>
+                <ul className="space-y-2 text-xs text-amber-700/80">
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-200/60 text-[10px] font-bold text-amber-700">1</span>
+                    Use a high-quality image that tells your story
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-200/60 text-[10px] font-bold text-amber-700">2</span>
+                    Write a descriptive caption for context
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-200/60 text-[10px] font-bold text-amber-700">3</span>
+                    Pin the exact location on the map
+                  </li>
+                </ul>
+              </section>
             </div>
           </div>
 
@@ -532,46 +538,60 @@ export default function CreateMemoryForm() {
         </FieldGroup>
 
         {!googleMapsApiKey ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
             `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` not found. Add the key to load the live Google Map picker.
           </div>
         ) : null}
 
         {state?.message ? (
           <div
-            className={`rounded-2xl px-4 py-3 text-sm ${
-              state.success ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"
+            className={`mt-6 rounded-xl px-4 py-3 text-sm ${
+              state.success ? "border border-green-200 bg-green-50 text-green-700" : "border border-red-200 bg-red-50 text-red-600"
             }`}
           >
             {state.message}
           </div>
         ) : null}
 
-        <div className="flex flex-col gap-4 rounded-[1.75rem] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(245,238,231,0.8))] p-5 shadow-[0_20px_60px_-44px_rgba(88,70,52,0.42)] sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-foreground">Ready to publish this memory?</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Your post needs an image and a selected map location before publishing.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button
-              type="submit"
-              disabled={isPending || !coordinates.lat || !coordinates.lng}
-              className="h-12 rounded-full px-6 text-sm font-semibold"
-            >
-              {isPending ? (
-                <>
-                  <LoaderCircle className="h-4 w-4 animate-spin" />
-                  Creating memory...
-                </>
-              ) : (
-                "Create memory"
-              )}
-            </Button>
-            <Button asChild type="button" variant="ghost" className="h-12 rounded-full px-6">
-              <Link href="/">Cancel</Link>
-            </Button>
+        {/* Sticky Bottom Bar */}
+        <div className="sticky bottom-0 z-20 -mx-4 border-t border-border/40 bg-background/80 px-6 py-4 backdrop-blur-xl sm:-mx-6 sm:px-8">
+          <div className="flex items-center justify-between gap-4">
+            <div className="hidden sm:block">
+              <p className="text-sm font-medium text-foreground">
+                {isFormValid ? (
+                  <span className="flex items-center gap-2 text-green-600">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Ready to share
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">
+                    Complete all fields to publish
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Button asChild type="button" variant="outline" className="rounded-lg">
+                <Link href="/">Cancel</Link>
+              </Button>
+              <Button
+                type="submit"
+                disabled={isPending}
+                className="rounded-lg px-6"
+              >
+                {isPending ? (
+                  <>
+                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Share Memory
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </form>
