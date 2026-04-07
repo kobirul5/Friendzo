@@ -31,7 +31,7 @@ export async function PUT(request: Request) {
         Authorization: accessToken,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ userId, action: "decline" }),
+      body: JSON.stringify({ id: userId, status: "REJECTED" }),
       cache: "no-store",
     });
 

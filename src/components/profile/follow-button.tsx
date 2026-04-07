@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { UserCheck, UserMinus, UserPlus, Clock, Check, X } from "lucide-react";
+import { UserPlus, Check, X } from "lucide-react";
 
 type FollowStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "CANCELED" | "NOTFOLLOW";
 
@@ -23,12 +23,11 @@ export function FollowButton({
   const [userRequestStatus, setUserRequestStatus] = useState<FollowStatus>(initialUserRequestStatus);
   const [isLoading, setIsLoading] = useState(false);
 
-  const isFriend = followStatus === "ACCEPTED";
-  const hasPendingRequest = followStatus === "PENDING" || userRequestStatus === "PENDING";
-  const isRequestReceived = userRequestStatus === "PENDING"; // Someone requested to follow you
+  const isFriend = followStatus === "ACCEPTED" || userRequestStatus === "ACCEPTED";
+  const hasPendingRequest = followStatus === "PENDING"; // I sent a request to them
+  const isRequestReceived = userRequestStatus === "PENDING"; // They sent a request to me
 
   const handleFollowAction = useCallback(async () => {
-    // Check if profile is complete before any action
     if (!isProfileComplete) {
       window.location.href = "/complete-profile";
       return;
@@ -50,20 +49,7 @@ export function FollowButton({
           setUserRequestStatus("NOTFOLLOW");
         }
       }
-      // If there's a pending request, cancel it
-      else if (hasPendingRequest) {
-        const res = await fetch("/api/follow/cancel", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: targetUserId }),
-        });
-
-        if (res.ok) {
-          setFollowStatus("NOTFOLLOW");
-          setUserRequestStatus("NOTFOLLOW");
-        }
-      }
-      // If someone sent you a request, accept it
+      // If someone sent me a request, accept it (priority over canceling my own request)
       else if (isRequestReceived) {
         const res = await fetch("/api/follow/accept", {
           method: "PUT",
@@ -73,6 +59,19 @@ export function FollowButton({
 
         if (res.ok) {
           setFollowStatus("ACCEPTED");
+          setUserRequestStatus("NOTFOLLOW");
+        }
+      }
+      // If I sent a request, cancel it
+      else if (hasPendingRequest) {
+        const res = await fetch("/api/follow/cancel", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: targetUserId }),
+        });
+
+        if (res.ok) {
+          setFollowStatus("NOTFOLLOW");
           setUserRequestStatus("NOTFOLLOW");
         }
       }
@@ -124,25 +123,12 @@ export function FollowButton({
 
   // Button rendering based on state
 
-  // If we are friends (mutually accepted) — no button, return null
+  // If we are friends — no button
   if (isFriend) {
     return null;
   }
 
-  // If I sent a follow request and it's pending — show "Cancel Request"
-  if (hasPendingRequest) {
-    return (
-      <Button
-        onClick={handleFollowAction}
-        disabled={isLoading}
-        className="rounded-xl bg-primary px-2 font-semibold text-white hover:bg-primary/90"
-      >
-        {isLoading ? "Canceling..." : "Cancel Request"}
-      </Button>
-    );
-  }
-
-  // If they sent me a request — show Accept/Reject
+  // If they sent me a request — show Accept/Reject (checked BEFORE my own pending)
   if (isRequestReceived) {
     return (
       <div className="flex items-center gap-2">
@@ -152,7 +138,7 @@ export function FollowButton({
           className="rounded-xl bg-green-500 px-6 font-semibold text-white hover:bg-green-600"
         >
           <Check className="mr-2 h-4 w-4" />
-          {isLoading ? "Accepting..." : "Accept Request"}
+          {isLoading ? "Accepting..." : "Accept"}
         </Button>
         <Button
           onClick={handleRejectRequest}
@@ -163,6 +149,19 @@ export function FollowButton({
           <X className="h-4 w-4" />
         </Button>
       </div>
+    );
+  }
+
+  // If I sent a request — show Cancel Request
+  if (hasPendingRequest) {
+    return (
+      <Button
+        onClick={handleFollowAction}
+        disabled={isLoading}
+        className="rounded-xl bg-primary px-2 font-semibold text-white hover:bg-primary/90"
+      >
+        {isLoading ? "Canceling..." : "Cancel Request"}
+      </Button>
     );
   }
 

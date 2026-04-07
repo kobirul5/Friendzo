@@ -34,6 +34,7 @@ export default async function UserProfilePage({
   const isOwnProfile = currentUserId === userId;
 
   const profile = (await getProfile(userId)) as ProfileViewData | null;
+  console.log("Profile Data from Backend:", profile);
 
   if (!profile) {
     return (

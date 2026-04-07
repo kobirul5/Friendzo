@@ -35,6 +35,7 @@ type ConversationItem = {
   preview: string;
   unreadCount: number;
   accent: string;
+  profileImage?: string | null;
   messages: MessageItem[];
 };
 
@@ -94,6 +95,7 @@ export default function MessagesPageClient({
         preview: "Send a message to start chatting",
         unreadCount: 0,
         accent: "from-sky-300 via-cyan-200 to-blue-100",
+        profileImage: null,
       }
       : null;
 
@@ -282,20 +284,32 @@ export default function MessagesPageClient({
                             onClick={() => setSelectedConversationId(conversation.id)}
                             className="flex w-[88px] shrink-0 flex-col items-center gap-2 text-center"
                           >
-                            <span
-                              className={`relative flex h-[52px] w-[52px] items-center justify-center rounded-full bg-gradient-to-br ${conversation.accent} text-sm font-semibold text-slate-800 transition-all ${isSelected
+                            <div
+                              className={`relative h-[52px] w-[52px] transition-all ${isSelected
                                   ? "scale-[1.03] ring-4 ring-primary/25"
                                   : "ring-2 ring-transparent"
                                 }`}
                             >
-                              {conversation.name
-                                .split(" ")
-                                .filter(Boolean)
-                                .slice(0, 2)
-                                .map((part) => part[0]?.toUpperCase())
-                                .join("")}
+                              {conversation.profileImage ? (
+                                <img
+                                  src={conversation.profileImage}
+                                  alt={conversation.name}
+                                  className="h-[52px] w-[52px] rounded-full object-cover"
+                                />
+                              ) : (
+                                <div
+                                  className={`flex h-[52px] w-[52px] items-center justify-center rounded-full bg-gradient-to-br ${conversation.accent} text-sm font-semibold text-slate-800`}
+                                >
+                                  {conversation.name
+                                    .split(" ")
+                                    .filter(Boolean)
+                                    .slice(0, 2)
+                                    .map((part) => part[0]?.toUpperCase())
+                                    .join("")}
+                                </div>
+                              )}
                               <span className="absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-green-500" />
-                            </span>
+                            </div>
                             <span className="line-clamp-2 text-xs font-medium leading-4 text-foreground">
                               {conversation.name}
                             </span>
@@ -334,24 +348,31 @@ export default function MessagesPageClient({
                         }`}
                     >
                       <div className="flex items-start gap-3">
-                        <div
-                          className={`relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${conversation.accent} text-sm font-semibold text-slate-800`}
-                        >
-                          {initials || "F"}
+                        <div className="relative h-14 w-14 shrink-0">
+                          {conversation.profileImage ? (
+                            <img
+                              src={conversation.profileImage}
+                              alt={conversation.name}
+                              className="h-14 w-14 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div
+                              className={`flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br ${conversation.accent} text-sm font-semibold text-slate-800`}
+                            >
+                              {initials || "F"}
+                            </div>
+                          )}
                           <span
                             className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white ${conversation.active ? "bg-green-500" : "bg-slate-300"
                               }`}
                           />
                         </div>
 
-                        <div className="min-w-0 flex-1">
+                        <div className="min-w-0 flex-1 ">
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <p className="truncate text-sm font-semibold text-foreground">
                                 {conversation.name}
-                              </p>
-                              <p className="truncate text-xs text-muted-foreground">
-                                {conversation.role}
                               </p>
                             </div>
                             {conversation.unreadCount ? (
@@ -361,12 +382,10 @@ export default function MessagesPageClient({
                             ) : null}
                           </div>
 
-                          <p className="mt-3 truncate text-sm text-muted-foreground">
+                          <p className=" truncate text-sm text-muted-foreground">
                             {conversation.preview}
                           </p>
-                          <p className="mt-2 text-xs text-muted-foreground/80">
-                            {conversation.lastSeen}
-                          </p>
+                          
                         </div>
                       </div>
                     </button>
@@ -389,15 +408,25 @@ export default function MessagesPageClient({
                 <div className="border-b border-border/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,239,232,0.92))] px-5 py-5 sm:px-6">
                   <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                     <div className="flex items-center gap-4">
-                      <div
-                        className={`relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br ${selectedConversation.accent} text-base font-semibold text-slate-800`}
-                      >
-                        {selectedConversation.name
-                          .split(" ")
-                          .filter(Boolean)
-                          .slice(0, 2)
-                          .map((part) => part[0]?.toUpperCase())
-                          .join("")}
+                      <div className="relative h-16 w-16 shrink-0">
+                        {selectedConversation.profileImage ? (
+                          <img
+                            src={selectedConversation.profileImage}
+                            alt={selectedConversation.name}
+                            className="h-16 w-16 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div
+                            className={`flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br ${selectedConversation.accent} text-base font-semibold text-slate-800`}
+                          >
+                            {selectedConversation.name
+                              .split(" ")
+                              .filter(Boolean)
+                              .slice(0, 2)
+                              .map((part) => part[0]?.toUpperCase())
+                              .join("")}
+                          </div>
+                        )}
                         <span
                           className={`absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-white ${selectedConversation.active ? "bg-green-500" : "bg-slate-300"
                             }`}
@@ -414,9 +443,7 @@ export default function MessagesPageClient({
                               }`}
                           />
                         </div>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {selectedConversation.handle} | {selectedConversation.role}
-                        </p>
+                       
                         <p className="mt-1 text-xs font-medium text-muted-foreground/90">
                           {selectedConversation.lastSeen}
                         </p>
@@ -441,29 +468,64 @@ export default function MessagesPageClient({
                    
                     <div className="flex-1 space-y-4 overflow-y-auto pr-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden lg:min-h-0">
                       {selectedMessages.length ? (
-                        selectedMessages.map((message) => (
-                          <div
-                            key={message.id}
-                            className={`flex ${message.sender === "me" ? "justify-end" : "justify-start"}`}
-                          >
+                        selectedMessages.map((message) => {
+                          const isMe = message.sender === "me";
+                          const otherUser = liveConversations.find(
+                            (c) => c.id === selectedConversationId
+                          );
+
+                          return (
                             <div
-                              className={`max-w-[85%] rounded-[1.6rem] px-4 py-3 shadow-sm sm:max-w-[70%] ${message.sender === "me"
-                                  ? "bg-primary text-primary-foreground"
-                                  : "border border-white/70 bg-white text-foreground"
-                                }`}
+                              key={message.id}
+                              className={`flex items-end gap-2 ${isMe ? "justify-end" : "justify-start"}`}
                             >
-                              <p className="text-sm leading-6">{message.text}</p>
-                              <p
-                                className={`mt-2 text-[11px] font-medium ${message.sender === "me"
-                                    ? "text-primary-foreground/80"
-                                    : "text-muted-foreground"
+                              {!isMe && (
+                                <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full">
+                                  {otherUser?.profileImage ? (
+                                    <img
+                                      src={otherUser.profileImage}
+                                      alt={otherUser.name}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className={`flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br ${otherUser?.accent || "from-sky-300 to-blue-100"} text-[10px] font-semibold text-slate-800`}>
+                                      {otherUser?.name
+                                        .split(" ")
+                                        .filter(Boolean)
+                                        .slice(0, 1)
+                                        .map((p) => p[0]?.toUpperCase())
+                                        .join("") || "?"}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              <div
+                                className={`max-w-[85%] rounded-[1.6rem] px-4 py-3 shadow-sm sm:max-w-[70%] ${isMe
+                                    ? "bg-primary text-primary-foreground"
+                                    : "border border-white/70 bg-white text-foreground"
                                   }`}
                               >
-                                {message.time}
-                              </p>
+                                <p className="text-sm leading-6">{message.text}</p>
+                                <p
+                                  className={` text-[11px] font-medium ${isMe
+                                      ? "text-primary-foreground/80"
+                                      : "text-muted-foreground"
+                                    }`}
+                                >
+                                  {message.time}
+                                </p>
+                              </div>
+                              {isMe && (
+                                <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full">
+                                  {/* Your profile image could go here if you have it */}
+                                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary/40 to-primary/20 text-[10px] font-semibold text-primary">
+                                    You
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          </div>
-                        ))
+                          );
+                        })
                       ) : (
                         <div className="flex h-full min-h-[220px] items-center justify-center rounded-[1.6rem] border border-dashed border-border/70 bg-white/70 p-6 text-center text-sm text-muted-foreground">
                           No messages yet. Send the first message to start this conversation.

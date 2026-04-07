@@ -31,7 +31,7 @@ export async function DELETE(request: Request) {
         Authorization: accessToken,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ userId }),
+      body: JSON.stringify({ id: userId }),
       cache: "no-store",
     });
 

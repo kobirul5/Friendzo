@@ -12,6 +12,7 @@ export type LiveConversation = {
   preview: string;
   unreadCount: number;
   accent: string;
+  profileImage?: string | null;
 };
 
 export type LiveMessage = {
@@ -80,7 +81,7 @@ export function useLiveMessages({
 
       if (payload.event === "messageList") {
         const nextItems = (payload.data?.userWithLastMessages ?? []).map(
-          (item: { user?: { id: string; firstName?: string; lastName?: string } | null; lastMessage?: { message?: string; createdAt?: string } | null }) => ({
+          (item: { user?: { id: string; firstName?: string; lastName?: string; profileImage?: string | null } | null; lastMessage?: { message?: string; createdAt?: string } | null }) => ({
             id: item.user?.id || "",
             name: buildName(item.user),
             handle: item.user?.id ? `@${item.user.id.slice(-6)}` : "@friendzo",
@@ -90,6 +91,7 @@ export function useLiveMessages({
             preview: item.lastMessage?.message || "Start your conversation",
             unreadCount: 0,
             accent: accentFor(item.user?.id || "friendzo"),
+            profileImage: item.user?.profileImage || null,
           })
         ).filter((item: LiveConversation) => item.id);
 
