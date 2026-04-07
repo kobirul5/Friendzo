@@ -8,6 +8,7 @@ import z from "zod";
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
 const createEventValidationSchema = z.object({
+  title: z.string().min(2, "Title must be at least 2 characters."),
   description: z.string().min(3, "Description must be at least 3 characters."),
   address: z.string().optional().or(z.literal("")),
   lat: z.string().min(1, "Latitude is required."),
@@ -24,6 +25,7 @@ export async function createEvent(_currentState: any, formData: FormData): Promi
   }
 
   const rawData = {
+    title: String(formData.get("title") || ""),
     description: String(formData.get("description") || ""),
     address: String(formData.get("address") || ""),
     lat: String(formData.get("lat") || ""),
@@ -56,6 +58,7 @@ export async function createEvent(_currentState: any, formData: FormData): Promi
   payload.append(
     "data",
     JSON.stringify({
+      title: rawData.title,
       description: rawData.description,
       address: rawData.address || undefined,
       lat: rawData.lat,

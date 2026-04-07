@@ -21,11 +21,15 @@ type PaginatedEventsResponse = {
 
 async function fetchEvents(accessToken?: string, page = 1, limit = 6): Promise<PaginatedEventsResponse> {
   if (!accessToken) {
+    console.log("[Events] No access token found");
     return { data: [], meta: null };
   }
 
   try {
-    const res = await fetch(`${BASE_URL}/events/paginated?page=${page}&limit=${limit}`, {
+    const url = `${BASE_URL}/events/paginated?page=${page}&limit=${limit}`;
+    console.log("[Events] Fetching:", url);
+
+    const res = await fetch(url, {
       method: "GET",
       headers: {
         Authorization: accessToken,
@@ -34,17 +38,21 @@ async function fetchEvents(accessToken?: string, page = 1, limit = 6): Promise<P
       cache: "no-store",
     });
 
-    if (!res.ok) {
+    console.log("[Events] Response status:", res.status);
+    const result = await res.json();
+    console.log("[Events] Response data:", result);
+
+    if (!res.ok || !result?.success) {
+      console.log("[Events] API error:", result?.message);
       return { data: [], meta: null };
     }
 
-    const result = await res.json();
     return {
       data: Array.isArray(result?.data) ? result.data : [],
       meta: result?.meta ?? null,
     };
   } catch (error) {
-    console.error("Failed to fetch events:", error);
+    console.error("[Events] Failed to fetch events:", error);
     return { data: [], meta: null };
   }
 }
@@ -57,7 +65,7 @@ export default async function EventsPage() {
   const total = eventsResponse.meta?.total ?? events.length;
   const limit = eventsResponse.meta?.limit ?? 6;
   const hasMore = total > events.length;
-
+console.log("[EventsPage] Total events:", total, "Fetched:", events, "Has more:", hasMore);
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-[linear-gradient(180deg,#f6f1ea_0%,#efe6db_55%,#e8ddd1_100%)]">
       <div className="container mx-auto px-4 py-5 sm:px-6 lg:px-8">

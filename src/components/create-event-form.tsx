@@ -13,9 +13,13 @@ import {
   LoaderCircle,
   Map,
   MapPin,
-  Image as ImageIcon,
   Sparkles,
   Upload,
+  ImagePlus,
+  Clock,
+  Navigation,
+  X,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -71,7 +75,7 @@ export default function CreateEventForm() {
   const markerRef = useRef<any>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [isResolvingAddress, setIsResolvingAddress] = useState(false);
-  const [isGoogleReady, setIsGoogleReady] = useState(() => 
+  const [isGoogleReady, setIsGoogleReady] = useState(() =>
     typeof window !== "undefined" && !!window.google?.maps
   );
   const [address, setAddress] = useState("");
@@ -291,8 +295,10 @@ export default function CreateEventForm() {
     });
   };
 
+  const isFormValid = coordinates.lat && coordinates.lng && imagePreview;
+
   return (
-    <div className="overflow-hidden rounded-[2.25rem] border border-white/60 bg-white/82 shadow-[0_30px_90px_-48px_rgba(88,70,52,0.42)] backdrop-blur-md">
+    <div className="mx-auto max-w-6xl">
       {googleMapsApiKey ? (
         <Script
           src={`https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}`}
@@ -301,90 +307,95 @@ export default function CreateEventForm() {
         />
       ) : null}
 
-      <div className="border-b border-border/60 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.95),rgba(244,235,225,0.92),rgba(235,224,213,0.88))] px-6 py-8 sm:px-8 sm:py-10">
+      {/* Header */}
+      <div className="mb-8">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          className="group mb-4 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back home
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+          Back to home
         </Link>
-        <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary/75">
-              New event
-            </p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-              Create a standout community event
+        <div className="flex items-start justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10">
+                <CalendarDays className="h-6 w-6 text-primary" />
+              </div>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
+                New Event
+              </p>
+            </div>
+            <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Create a community event
             </h1>
-            
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-white/70 bg-white/75 px-4 py-3 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
-                Cover
-              </p>
-              <p className="mt-2 text-sm font-medium text-foreground">Large event preview</p>
-            </div>
-            <div className="rounded-2xl border border-white/70 bg-white/75 px-4 py-3 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
-                Schedule
-              </p>
-              <p className="mt-2 text-sm font-medium text-foreground">Date and time ready</p>
-            </div>
-            <div className="rounded-2xl border border-white/70 bg-white/75 px-4 py-3 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">
-                Location
-              </p>
-              <p className="mt-2 text-sm font-medium text-foreground">Google map selection</p>
-            </div>
+            <p className="mt-2 text-base text-muted-foreground">
+              Fill in the details below to publish your event to the community.
+            </p>
           </div>
         </div>
       </div>
 
-      <form action={formAction} className="space-y-8 px-6 py-8 sm:px-8 sm:py-10">
+      <form action={formAction}>
         <FieldGroup>
-          <div className="grid gap-8 xl:grid-cols-[1.05fr_0.95fr]">
-            <div className="space-y-7">
-              <div className="rounded-[2rem] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(248,243,237,0.88))] p-5 shadow-[0_20px_60px_-44px_rgba(88,70,52,0.42)] sm:p-6">
+          <div className="grid gap-8 lg:grid-cols-5">
+            {/* Left Column - Main Details */}
+            <div className="space-y-6 lg:col-span-3">
+              {/* Event Cover */}
+              <section className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
                 <div className="mb-5 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    <ImageIcon className="h-5 w-5" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <ImagePlus className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Event cover</p>
-                    <p className="text-xs text-muted-foreground">Make your event stand out in the feed</p>
+                    <h2 className="text-base font-semibold text-foreground">Event Cover</h2>
+                    <p className="text-xs text-muted-foreground">Upload a captivating image for your event</p>
                   </div>
                 </div>
+
                 <Field>
-                  <FieldLabel>
-                    Event image <span className="text-red-500">*</span>
-                  </FieldLabel>
                   <FieldContent>
-                    <label className="flex cursor-pointer flex-col items-center justify-center rounded-[1.5rem] border border-dashed border-primary/25 bg-primary/5 px-6 py-8 text-center transition-colors hover:border-primary/40 hover:bg-primary/10">
+                    <label className="group relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-border/70 bg-muted/20 px-6 py-12 text-center transition-all hover:border-primary/40 hover:bg-primary/5">
                       {imagePreview ? (
-                        <div className="mb-4 w-full overflow-hidden rounded-[1.5rem] border border-white/70 shadow-sm">
+                        <div className="relative h-64 w-full sm:h-72">
                           <img
                             src={imagePreview}
-                            alt="Selected event preview"
-                            className="h-72 w-full object-cover sm:h-96"
+                            alt="Event cover preview"
+                            className="h-full w-full rounded-lg object-cover"
                           />
+                          {/* Remove button */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setImagePreview(null);
+                              setSelectedImageName("");
+                            }}
+                            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-black/80"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                          {/* Success indicator */}
+                          <div className="absolute bottom-3 left-3 flex items-center gap-2 rounded-full bg-green-600/90 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Cover uploaded
+                          </div>
                         </div>
                       ) : (
-                        <div className="mb-4 flex h-72 w-full items-center justify-center rounded-[1.5rem] bg-primary/8 sm:h-96">
-                          <Upload className="h-10 w-10 text-primary" />
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+                            <Upload className="h-7 w-7 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">
+                              Click to upload your event cover
+                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              JPG, PNG or WEBP — Recommended: 1200×630px
+                            </p>
+                          </div>
                         </div>
                       )}
-                      <span className="text-sm font-semibold text-foreground">Choose an image</span>
-                      <span className="mt-1 text-sm text-muted-foreground">
-                        JPG, PNG or WEBP image for your event cover
-                      </span>
-                      {selectedImageName ? (
-                        <span className="mt-3 rounded-full bg-white px-3 py-1 text-xs font-medium text-foreground shadow-sm">
-                          {selectedImageName}
-                        </span>
-                      ) : null}
                       <Input
                         name="image"
                         type="file"
@@ -395,25 +406,76 @@ export default function CreateEventForm() {
                         onChange={handleImageChange}
                       />
                     </label>
-                    <FieldDescription>Your event cover will be uploaded with the post.</FieldDescription>
                   </FieldContent>
                   <FieldError>{getFieldError("image")}</FieldError>
                 </Field>
-              </div>
+              </section>
 
-              <div className="rounded-[2rem] border border-white/70 bg-white/90 p-5 shadow-[0_20px_60px_-44px_rgba(88,70,52,0.4)] sm:p-6">
+              {/* Event Details */}
+              <section className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
                 <div className="mb-5 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    <CalendarDays className="h-5 w-5" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Sparkles className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Event schedule</p>
-                    <p className="text-xs text-muted-foreground">Choose the exact date and time</p>
+                    <h2 className="text-base font-semibold text-foreground">Event Details</h2>
+                    <p className="text-xs text-muted-foreground">Give your event a name and description</p>
                   </div>
                 </div>
+
+                <div className="space-y-5">
+                  <Field>
+                    <FieldLabel>
+                      Event title <span className="text-red-500">*</span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <Input
+                        name="title"
+                        type="text"
+                        required
+                        placeholder="e.g., Summer Music Festival 2024"
+                        className="rounded-lg"
+                        disabled={isPending}
+                      />
+                      <FieldDescription>A catchy title helps people find your event.</FieldDescription>
+                    </FieldContent>
+                    <FieldError>{getFieldError("title")}</FieldError>
+                  </Field>
+
+                  <Field>
+                    <FieldLabel>
+                      Description <span className="text-red-500">*</span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <Textarea
+                        name="description"
+                        required
+                        placeholder="Tell people what makes this event special..."
+                        className="min-h-[140px] rounded-lg"
+                        disabled={isPending}
+                      />
+                      <FieldDescription>Describe the event, activities, and who should attend.</FieldDescription>
+                    </FieldContent>
+                    <FieldError>{getFieldError("description")}</FieldError>
+                  </Field>
+                </div>
+              </section>
+
+              {/* Schedule */}
+              <section className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
+                <div className="mb-5 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Clock className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-semibold text-foreground">Schedule</h2>
+                    <p className="text-xs text-muted-foreground">When is your event happening?</p>
+                  </div>
+                </div>
+
                 <Field>
                   <FieldLabel>
-                    Event time <span className="text-red-500">*</span>
+                    Date & time <span className="text-red-500">*</span>
                   </FieldLabel>
                   <FieldContent>
                     <Input
@@ -421,83 +483,106 @@ export default function CreateEventForm() {
                       type="datetime-local"
                       required
                       disabled={isPending}
-                      className="rounded-xl border-white/70 bg-muted/15"
+                      className="rounded-lg"
                     />
-                    <FieldDescription>Choose when the event is happening.</FieldDescription>
+                    <FieldDescription>Select the start date and time for your event.</FieldDescription>
                   </FieldContent>
                   <FieldError>{getFieldError("startedAt")}</FieldError>
                 </Field>
-              </div>
+              </section>
+            </div>
 
-              <div className="rounded-[2rem] border border-white/70 bg-white/90 p-5 shadow-[0_20px_60px_-44px_rgba(88,70,52,0.4)] sm:p-6">
+            {/* Right Column - Map */}
+            <div className="space-y-6 lg:col-span-2">
+              <section className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
                 <div className="mb-5 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    <Sparkles className="h-5 w-5" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Map className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Event story</p>
-                    <p className="text-xs text-muted-foreground">Tell people what this event is about</p>
+                    <h2 className="text-base font-semibold text-foreground">Location</h2>
+                    <p className="text-xs text-muted-foreground">Where is your event taking place?</p>
                   </div>
                 </div>
-                <Field>
-                  <FieldLabel>
-                    Description <span className="text-red-500">*</span>
-                  </FieldLabel>
-                  <FieldContent>
-                    <Textarea
-                      name="description"
-                      required
-                      placeholder="Tell people about this event..."
-                      className="min-h-40 rounded-[1.5rem] border-white/70 bg-muted/15"
-                      disabled={isPending}
-                    />
-                    <FieldDescription>A short event description for the feed card.</FieldDescription>
-                  </FieldContent>
-                  <FieldError>{getFieldError("description")}</FieldError>
-                </Field>
-              </div>
-            </div>
 
-            <div className="space-y-7">
-              <div className="rounded-[2rem] border border-white/70 bg-white/90 p-5 shadow-[0_20px_60px_-44px_rgba(88,70,52,0.4)] sm:p-6">
-                <Field>
-                  <FieldLabel>
-                    Pick location on map <span className="text-red-500">*</span>
-                  </FieldLabel>
-                  <FieldContent>
-                    <div className="overflow-hidden rounded-[1.5rem] border border-primary/15 bg-white shadow-sm">
-                      <div className="flex items-center gap-2 border-b border-border/70 bg-primary/5 px-4 py-3 text-sm font-medium text-foreground">
-                        <Map className="h-4 w-4 text-primary" />
-                        Google map picker
-                      </div>
-                      <div
-                        ref={mapRef}
-                        className="h-[380px] w-full bg-[linear-gradient(135deg,rgba(236,227,217,0.85),rgba(249,246,241,0.95))] sm:h-[460px]"
-                      />
-                    </div>
-                    <FieldDescription>
-                      Click anywhere on the map to select a location and save its latitude and longitude.
-                    </FieldDescription>
-                  </FieldContent>
-                  <FieldError>{getFieldError("lat") || getFieldError("lng")}</FieldError>
-                </Field>
+                {/* Map Container */}
+                <div className="mb-4 overflow-hidden rounded-xl border border-border/60">
+                  <div
+                    ref={mapRef}
+                    className="h-[320px] w-full bg-muted sm:h-[380px]"
+                  />
+                </div>
 
-                <div className="mt-5 rounded-[1.5rem] border border-primary/10 bg-primary/5 p-5">
-                  <div className="flex items-start gap-3 text-sm text-muted-foreground">
-                    <MapPin className="mt-0.5 h-4 w-4 text-primary" />
-                    <div className="space-y-1">
-                      <p>{locationMessage}</p>
-                      <p className="text-xs">
-                        {coordinates.lat && coordinates.lng
-                          ? `Lat: ${coordinates.lat} | Lng: ${coordinates.lng}`
-                          : "No coordinates selected yet."}
-                      </p>
+                {/* Location Controls */}
+                <div className="mb-4 flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleUseCurrentLocation}
+                    disabled={isGettingLocation || isPending}
+                    className="flex-1 rounded-lg text-xs"
+                  >
+                    {isGettingLocation ? (
+                      <LoaderCircle className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Navigation className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    My Location
+                  </Button>
+                </div>
+
+                {/* Location Status */}
+                <div className={`rounded-xl border p-4 transition-colors ${
+                  coordinates.lat && coordinates.lng
+                    ? "border-green-200 bg-green-50/50"
+                    : "border-border/60 bg-muted/30"
+                }`}>
+                  <div className="flex items-start gap-3">
+                    <MapPin className={`mt-0.5 h-4 w-4 shrink-0 ${
+                      coordinates.lat && coordinates.lng ? "text-green-600" : "text-muted-foreground"
+                    }`} />
+                    <div className="space-y-1.5">
+                      <p className="text-sm font-medium text-foreground">{locationMessage}</p>
+                      {coordinates.lat && coordinates.lng ? (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground/80">
+                          <span className="rounded-md bg-white/80 px-2 py-1 font-mono">
+                            {parseFloat(coordinates.lat).toFixed(4)}
+                          </span>
+                          <span className="text-muted-foreground/40">,</span>
+                          <span className="rounded-md bg-white/80 px-2 py-1 font-mono">
+                            {parseFloat(coordinates.lng).toFixed(4)}
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground/70">
+                          Click on the map or use your current location
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
+              </section>
 
+              {/* Quick Tips */}
+              <section className="rounded-2xl border border-amber-200/50 bg-amber-50/50 p-5">
+                <h3 className="mb-3 text-sm font-semibold text-amber-800">Quick Tips</h3>
+                <ul className="space-y-2 text-xs text-amber-700/80">
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-200/60 text-[10px] font-bold text-amber-700">1</span>
+                    Use a high-quality cover image to attract attention
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-200/60 text-[10px] font-bold text-amber-700">2</span>
+                    Write a clear, descriptive title
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-200/60 text-[10px] font-bold text-amber-700">3</span>
+                    Select the exact location on the map
+                  </li>
+                </ul>
+              </section>
+            </div>
           </div>
 
           <input type="hidden" name="lat" value={coordinates.lat} />
@@ -505,49 +590,60 @@ export default function CreateEventForm() {
         </FieldGroup>
 
         {!googleMapsApiKey ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
             `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` not found. Add the key to load the live Google Map picker.
           </div>
         ) : null}
 
         {state?.message ? (
           <div
-            className={`rounded-2xl px-4 py-3 text-sm ${
-              state.success ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"
+            className={`mt-6 rounded-xl px-4 py-3 text-sm ${
+              state.success ? "border border-green-200 bg-green-50 text-green-700" : "border border-red-200 bg-red-50 text-red-600"
             }`}
           >
             {state.message}
           </div>
         ) : null}
 
-        <div className="flex flex-col gap-4 rounded-[1.75rem] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(245,238,231,0.8))] p-5 shadow-[0_20px_60px_-44px_rgba(88,70,52,0.42)] sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-foreground">Ready to publish this event?</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Your event needs an image and a selected map location before publishing.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button
-              type="submit"
-              disabled={isPending || !coordinates.lat || !coordinates.lng}
-              className="h-12 rounded-full px-6 text-sm font-semibold"
-            >
-              {isPending ? (
-                <>
-                  <LoaderCircle className="h-4 w-4 animate-spin" />
-                  Creating event...
-                </>
-              ) : (
-                <>
-                  <CalendarDays className="h-4 w-4" />
-                  Create event
-                </>
-              )}
-            </Button>
-            <Button asChild type="button" variant="ghost" className="h-12 rounded-full px-6">
-              <Link href="/">Cancel</Link>
-            </Button>
+        {/* Sticky Bottom Bar */}
+        <div className="sticky bottom-0 z-20 -mx-4 border-t border-border/40 bg-background/80 px-6 py-4 backdrop-blur-xl sm:-mx-6 sm:px-8">
+          <div className="flex items-center justify-between gap-4">
+            <div className="hidden sm:block">
+              <p className="text-sm font-medium text-foreground">
+                {isFormValid ? (
+                  <span className="flex items-center gap-2 text-green-600">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Ready to publish
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">
+                    Complete all fields to publish
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Button asChild type="button" variant="outline" className="rounded-lg">
+                <Link href="/">Cancel</Link>
+              </Button>
+              <Button
+                type="submit"
+                disabled={isPending}
+                className="rounded-lg px-6"
+              >
+                {isPending ? (
+                  <>
+                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <CalendarDays className="mr-2 h-4 w-4" />
+                    Publish Event
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </form>

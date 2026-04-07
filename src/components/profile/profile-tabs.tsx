@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Grid, Gift, CalendarDays, Package, Inbox, LoaderCircle, Send } from "lucide-react";
+import { Grid, Gift, CalendarDays, Calendar, Clock, Heart, Package, Inbox, LoaderCircle, Send } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -18,9 +18,13 @@ export type ProfileMemory = {
 
 export type ProfileEvent = {
   id: string;
+  title?: string;
   image: string;
   description: string;
+  startedAt?: string;
   createdAt: string;
+  likeCount?: number;
+  isLiked?: boolean;
 };
 
 export type ProfileGiftItem = {
@@ -171,39 +175,96 @@ export function ProfileTabs({
       {activeTab === "events" ? (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="flex items-center gap-3 text-2xl font-black tracking-tight">
-              Events Created
-            </h2>
+            <div>
+              <h2 className="flex items-center gap-3 text-2xl font-black tracking-tight">
+                <CalendarDays className="h-6 w-6 text-primary" />
+                Events Created
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Events you've organized for the community
+              </p>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            {events?.map((item) => (
-              <Card
-                key={item.id}
-                className="group overflow-hidden rounded-3xl border-none shadow-lg transition-all hover:scale-105 active:scale-95"
-              >
-                <div className="relative aspect-video w-full">
-                  <Image src={item.image} alt="Event" fill className="object-cover" />
-                </div>
-                <CardContent className="p-4">
-                  <h4 className="truncate line-clamp-1 font-bold">
-                    {item.description}
-                  </h4>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {new Date(item.createdAt).toLocaleDateString()}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-            {(!events || events.length === 0) && (
-              <Card className="col-span-3 border-dashed bg-muted/10 p-8 text-center">
-                <CalendarDays className="mx-auto mb-4 h-12 w-12 text-muted-foreground/30" />
-                <p className="text-sm text-muted-foreground italic">
-                  No events organized yet
-                </p>
-              </Card>
-            )}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {events?.map((item) => {
+              const eventDate = item.startedAt ? new Date(item.startedAt) : new Date(item.createdAt);
+              const month = eventDate.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
+              const day = eventDate.getDate();
+
+              return (
+                <Card
+                  key={item.id}
+                  className="group relative overflow-hidden rounded-[1.75rem] border border-white/60 bg-white/80 shadow-[0_20px_60px_-30px_rgba(88,70,52,0.25)] backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_30px_80px_-35px_rgba(88,70,52,0.35)] active:scale-[0.98]"
+                >
+                  {/* Date Badge */}
+                  <div className="absolute top-4 left-4 z-10 flex flex-col items-center rounded-2xl bg-white/95 px-3 py-2 shadow-lg backdrop-blur-sm">
+                    <span className="text-[10px] font-black tracking-widest text-primary/80">{month}</span>
+                    <span className="text-xl font-black leading-none text-foreground">{day}</span>
+                  </div>
+
+                  {/* Image */}
+                  <div className="relative aspect-[4/3] w-full overflow-hidden">
+                    <Image
+                      src={item.image}
+                      alt={item.title || "Event"}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  </div>
+
+                  {/* Content */}
+                  <CardContent className="p-5">
+                    {item.title && (
+                      <h4 className="text-lg font-bold leading-tight tracking-tight text-foreground line-clamp-2">
+                        {item.title}
+                      </h4>
+                    )}
+                    {item.description && (
+                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground/80 line-clamp-2">
+                        {item.description}
+                      </p>
+                    )}
+                    <div className="mt-3 flex items-center gap-2 text-xs font-medium text-muted-foreground/70">
+                      <Clock className="h-3.5 w-3.5" />
+                      <span>
+                        {eventDate.toLocaleDateString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                    {item.likeCount !== undefined && (
+                      <div className="mt-3 flex items-center gap-1.5 text-xs font-medium text-muted-foreground/60">
+                        <Heart className={`h-3.5 w-3.5 ${item.isLiked ? "fill-red-500 text-red-500" : ""}`} />
+                        <span>{item.likeCount} {item.likeCount === 1 ? "like" : "likes"}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
+
+          {(!events || events.length === 0) && (
+            <Card className="overflow-hidden rounded-[2rem] border-dashed border-2 border-primary/15 bg-muted/5 p-12 text-center">
+              <div className="flex flex-col items-center gap-4">
+                <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/8">
+                  <CalendarDays className="h-10 w-10 text-primary/40" />
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-foreground">No events yet</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Create your first community event and bring people together!
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
         </div>
       ) : null}
 

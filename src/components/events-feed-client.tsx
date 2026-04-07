@@ -3,7 +3,8 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { CalendarDays, LoaderCircle, MapPin, Sparkles } from "lucide-react";
+import { CalendarDays, LoaderCircle, MapPin, Sparkles, Heart } from "lucide-react";
+import { toggleEventLike } from "@/services/event-like";
 
 type FeedUser = {
   id: string;
@@ -15,12 +16,16 @@ type FeedUser = {
 
 export type EventFeedItem = {
   id: string;
+  title?: string | null;
   image?: string | null;
   description?: string | null;
   address?: string | null;
+  startedAt?: string;
   createdAt: string;
   distanceInKm?: number | null;
   user?: FeedUser;
+  likeCount?: number;
+  isLiked?: boolean;
 };
 
 type PaginatedEventsClientResponse = {
@@ -76,6 +81,19 @@ export default function EventsFeedClient({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  const handleLike = async (eventId: string) => {
+    const result = await toggleEventLike(eventId);
+    if (result.success) {
+      setItems((current) =>
+        current.map((item) =>
+          item.id === eventId
+            ? { ...item, isLiked: result.liked, likeCount: result.likeCount }
+            : item
+        )
+      );
+    }
+  };
 
   useEffect(() => {
     setItems(initialItems);
@@ -184,7 +202,7 @@ export default function EventsFeedClient({
                 key={item.id}
                 className="overflow-hidden rounded-[2rem] border border-white/70 bg-white shadow-[0_24px_80px_-42px_rgba(88,70,52,0.45)]"
               >
-                <div className="relative min-h-[340px] bg-[linear-gradient(160deg,rgba(92,78,63,0.08),rgba(232,220,209,0.55))]">
+                <div className="relative min-h-85 bg-[linear-gradient(160deg,rgba(92,78,63,0.08),rgba(232,220,209,0.55))]">
                   {item.image ? (
                     <img
                       src={item.image}
@@ -192,9 +210,9 @@ export default function EventsFeedClient({
                       className="absolute inset-0 h-full w-full object-cover"
                     />
                   ) : null}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-white/10" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/20 to-white/10" />
 
-                  <div className="relative flex h-full min-h-[340px] flex-col justify-between p-6">
+                  <div className="relative flex h-full min-h-85 flex-col justify-between p-6">
                     <div className="flex items-start justify-between gap-4">
                       <span className="rounded-full bg-white/18 px-4 py-2 text-sm font-semibold text-white backdrop-blur-md">
                         {formatDate(item.createdAt)}
@@ -206,9 +224,35 @@ export default function EventsFeedClient({
 
                     <div className="space-y-5">
                       <div className="max-w-xl">
-                        <p className="text-2xl font-semibold leading-tight text-white md:text-[1.9rem]">
-                          {item.description || "A new event is happening on Friendzo."}
-                        </p>
+                        {item.startedAt && (
+                          <div className="mb-2 flex items-center gap-2 text-sm text-white/80">
+                            <CalendarDays className="h-4 w-4" />
+                            <span>
+                              {new Date(item.startedAt).toLocaleDateString("en-US", {
+                                weekday: "short",
+                                month: "short",
+                                day: "numeric",
+                                hour: "numeric",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                        )}
+                        {item.title ? (
+                          <p className="text-2xl font-semibold leading-tight text-white md:text-[1.9rem]">
+                            {item.title}
+                          </p>
+                        ) : null}
+                        {item.description ? (
+                          <p className="text-base leading-relaxed text-white/90 md:text-[1.05rem]">
+                            {item.description}
+                          </p>
+                        ) : null}
+                        {!item.title && !item.description ? (
+                          <p className="text-2xl font-semibold leading-tight text-white md:text-[1.9rem]">
+                            A new event is happening on Friendzo.
+                          </p>
+                        ) : null}
                         {item.address ? (
                           <div className="mt-3 flex items-center gap-2 text-sm text-white/80">
                             <MapPin className="h-4 w-4" />
@@ -256,11 +300,24 @@ export default function EventsFeedClient({
                           </div>
                         )}
 
-                        <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-3 text-sm text-white backdrop-blur-md">
-                          <CalendarDays className="h-4 w-4" />
-                          {item.distanceInKm != null
-                            ? `${item.distanceInKm.toFixed(1)} km away`
-                            : "Upcoming event"}
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => handleLike(item.id)}
+                            className={`inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm backdrop-blur-md transition-colors ${
+                              item.isLiked
+                                ? "bg-red-500/80 text-white hover:bg-red-600/80"
+                                : "bg-white/15 text-white hover:bg-white/25"
+                            }`}
+                          >
+                            <Heart className={`h-4 w-4 ${item.isLiked ? "fill-current" : ""}`} />
+                            <span>{item.likeCount || 0}</span>
+                          </button>
+                          <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-3 text-sm text-white backdrop-blur-md">
+                            <CalendarDays className="h-4 w-4" />
+                            {item.distanceInKm != null
+                              ? `${item.distanceInKm.toFixed(1)} km away`
+                              : "Upcoming event"}
+                          </div>
                         </div>
                       </div>
                     </div>
