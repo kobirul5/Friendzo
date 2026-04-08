@@ -1,69 +1,79 @@
-# Friendzo Frontend: Modern Social Web Application
+# Friendzo Frontend
 
-A sleek, modern, and high-performance social networking frontend for the Friendzo ecosystem. Built with Next.js 16 and Tailwind CSS 4, it's designed to deliver a premium user experience across all devices.
+Friendzo Frontend is the Next.js client for the Friendzo social platform. It handles the public site, authenticated social experience, admin dashboards, and all UI flows that talk to the backend API.
 
----
+## What this app covers
 
-## ✨ Features & Dashboards
+- Home feed with memories and live community content.
+- Events feed, event creation, and event engagement.
+- Messaging UI with live chat state.
+- Profile pages with memories, events, gifts, and follow actions.
+- Discovery flows such as find friends, matches, nearby users, and location-aware browsing.
+- Store and payment screens for coins, gift cards, and checkout success.
+- Admin dashboard screens for users, reports, posts, payments, interests, gift cards, and settings.
+- Auth flows for login, register, OTP verification, forgot/reset password, and complete profile.
 
-### 1. **Multi-Role User Experience**
-- **Admin Dashboard**: Full control over user accounts, gift cards, coin prices, and moderation.
-- **Event Manager**: Tools to create and manage local events and track bookings.
-- **Travel Manager**: Dedicated views for organizing and promoting travel-related activities.
-- **User Dashboard**: Personalized social feed, profile settings, and discovery tools.
+## Tech Stack
 
-### 2. **Social Interaction Module**
-- **Feed**: View and interact with "Memories" and "Events" from around the community.
-- **Messaging**: Real-time private chat interface with support for text and media.
-- **Notifications**: Instant pop-up and central hub for updates on interactions.
+- Next.js 16 App Router
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- Radix UI primitives
+- Lucide React icons
+- React Hook Form
+- Zod validation
+- Sonner toasts
+- next-themes
+- jsonwebtoken for token decoding on the server side
 
-### 3. **Virtual Marketplace**
-- **Gift Shop**: Interactive gift browsing and purchasing UI.
-- **Wallet & Coins**: Real-time balance tracking and historical transaction views.
-- **Stripe Checkout**: Seamlessly integrated payment flows for subscriptions and credits.
+## Project Structure
 
-### 4. **Discovery & Networking**
-- **Friend Grid**: Browse the network and send follow requests.
-- **Proximity Search**: Find people and events near you using geospatial data.
+- `src/app` - route groups, layouts, pages, and API proxy routes.
+- `src/components` - shared UI, feature components, dialogs, and feed clients.
+- `src/services` - server actions that forward authenticated requests to the backend.
+- `src/hooks` - custom client hooks.
+- `src/lib` - helper utilities.
+- `src/proxy.ts` - auth-aware routing and access control.
 
----
+## Main Pages
 
-## 🛠️ Technology Stack
+- `/` - home feed
+- `/events` - community events feed
+- `/messages` - messaging center
+- `/friends` - friends list
+- `/find-friends` - discovery and matching
+- `/matches` - match browser
+- `/explore` - nearby discovery
+- `/profile` and `/profile/[userId]` - profile views
+- `/create-memory` and `/create-event` - content creation
+- `/store` - coins and gift cards
+- `/complete-profile` - onboarding flow
+- `/login`, `/register`, `/verify-otp`, `/reset-password`, `/foget-password` - auth screens
+- `/admin/dashboard` - admin area
 
-- **Framework**: [Next.js 16 (App Router)](https://nextjs.org/)
-- **Core Library**: React 19 & TypeScript.
-- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/) with a custom design system.
-- **Components**: [Radix UI](https://www.radix-ui.com/) (Headless and accessible primitives).
-- **Icons**: [Lucide React](https://lucide.dev/).
-- **Forms**: [React Hook Form](https://react-hook-form.com/) & [Zod](https://zod.dev/) for data safety.
-- **Real-time**: [Socket.io-client](https://socket.io/) integration.
+## Backend Connection
 
----
+This frontend expects the backend API to be available through `NEXT_PUBLIC_API_URL`.
 
-## 📂 Key Directory Breakdown
+Most server actions and route handlers call the Friendzo backend with that base URL and the user token stored in cookies.
 
-- `src/app`: Multi-layout system with protected routes based on user role.
-- `src/components/shared`: Reusable components used across all dashboards (Headers, Sidebar, Cards).
-- `src/services`: Next.js Server Actions for secure backend interaction.
-- `src/hooks`: Global custom hooks for authentication, notifications, and location tracking.
+## Environment Variables
 
----
+- `NEXT_PUBLIC_API_URL` - backend base URL, for example `https://friendzo-server.onrender.com/api/v1`
+- `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` - Google Maps key for map and location features
+- `JWT_SECRET` - used by server-side auth/proxy logic
 
-## 🚀 Getting Started
+## Scripts
 
-1. Clone the project: `git clone <repo-url>`
-2. Install dependencies: `bun install` or `npm install`
-3. Configure `.env`:
-   - `NEXT_PUBLIC_API_URL`: Your backend endpoint.
-4. Run dev server: `bun run dev`
+- `bun run dev` or `npm run dev` - start the development server
+- `bun run build` or `npm run build` - build the app
+- `bun run start` or `npm run start` - run the production build
+- `bun run lint` or `npm run lint` - run ESLint
 
----
+## Getting Started
 
-## 🔗 Project Links
-- [Backend Documentation](../Friendzo_Server/README.md)
-- [Project Architecture Chart](../README.md)
-
----
-
-## 📜 License
-Private & Proprietary.
+1. Install dependencies.
+2. Set `NEXT_PUBLIC_API_URL` to the backend service.
+3. Add the Google Maps key if you use map features.
+4. Start the app with the dev script.
