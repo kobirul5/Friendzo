@@ -57,29 +57,11 @@ export async function proxy(request: NextRequest) {
     const isAuth = isAuthRoute(pathname)
     const routerOwner = getRouteOwner(pathname);
 
-    // Rule for unverified users
-    if (accessToken && isVerified === false && pathname !== "/verify-otp" && !isAuth) {
-        return NextResponse.redirect(new URL('/verify-otp', request.url));
-    }
-
-    // Rule 1 : User is logged in and trying to access auth route. Redirect to default dashboard
-    if (accessToken && isAuth && userRole) {
-        return NextResponse.redirect(new URL(getDefaultDashboardRoute(userRole), request.url))
-    }
-
-    // Rule 1.5 : Admin trying to access user home page. Redirect to admin dashboard
-    if (accessToken && userRole === "ADMIN" && pathname === "/") {
-        return NextResponse.redirect(new URL("/admin/dashboard", request.url))
-    }
-
-    // Rule 2 : User is trying to access open public route
-    if (routerOwner === null) {
-        return NextResponse.next();
-    }
-
-    // Rule 1 & 2 for open public routes and auth routes
-
     if (!accessToken) {
+        if (isAuth) {
+            return NextResponse.next();
+        }
+
         const loginUrl = new URL("/login", request.url);
         loginUrl.searchParams.set("redirect", pathname);
         return NextResponse.redirect(loginUrl);
@@ -90,6 +72,23 @@ export async function proxy(request: NextRequest) {
         loginUrl.searchParams.set("redirect", pathname);
         return NextResponse.redirect(loginUrl);
     }
+
+    // Rule for unverified users
+    if (isVerified === false && pathname !== "/verify-otp" && !isAuth) {
+        return NextResponse.redirect(new URL('/verify-otp', request.url));
+    }
+
+    // Rule 1 : User is logged in and trying to access auth route. Redirect to default dashboard
+    if (isAuth && userRole) {
+        return NextResponse.redirect(new URL(getDefaultDashboardRoute(userRole), request.url))
+    }
+
+    // Rule 1.5 : Admin trying to access user home page. Redirect to admin dashboard
+    if (userRole === "ADMIN" && pathname === "/") {
+        return NextResponse.redirect(new URL("/admin/dashboard", request.url))
+    }
+
+    // No public routes for unauthenticated users; authenticated users can continue below.
 
     // Rule 3 : User is trying to access common protected route
     if (routerOwner === "COMMON") {
