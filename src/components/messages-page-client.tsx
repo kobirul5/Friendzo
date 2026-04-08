@@ -227,7 +227,7 @@ export default function MessagesPageClient({
         <div className="grid flex-1 gap-5 overflow-hidden lg:min-h-0 lg:grid-cols-[360px_minmax(0,1fr)]">
           <aside className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/78 shadow-[0_30px_90px_-50px_rgba(88,70,52,0.42)] backdrop-blur-md lg:flex lg:min-h-0 lg:flex-col">
             <div className="border-b border-border/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(250,243,236,0.9))] p-5 pb-2">
-            
+
               <div className="mt-5 rounded-[1.5rem] border border-border/70 bg-white/90 p-2 shadow-sm">
                 <div className="flex items-center gap-3 rounded-3xl px-3 py-2">
                   <Search className="h-4 w-4 text-muted-foreground" />
@@ -250,10 +250,10 @@ export default function MessagesPageClient({
                 </span>
                 <span
                   className={`rounded-full px-2 py-1 font-semibold ${socketStatus === "connected"
-                      ? "bg-green-100 text-green-700"
-                      : socketStatus === "connecting"
-                        ? "bg-amber-100 text-amber-700"
-                        : "bg-red-100 text-red-700"
+                    ? "bg-green-100 text-green-700"
+                    : socketStatus === "connecting"
+                      ? "bg-amber-100 text-amber-700"
+                      : "bg-red-100 text-red-700"
                     }`}
                 >
                   {socketStatus}
@@ -286,8 +286,8 @@ export default function MessagesPageClient({
                           >
                             <div
                               className={`relative h-13 w-13 transition-all ${isSelected
-                                  ? "scale-[1.03] "
-                                  : "ring-2 ring-transparent"
+                                ? "scale-[1.03] "
+                                : "ring-2 ring-transparent"
                                 }`}
                             >
                               {conversation.profileImage ? (
@@ -345,8 +345,8 @@ export default function MessagesPageClient({
                       type="button"
                       onClick={() => setSelectedConversationId(conversation.id)}
                       className={`w-full rounded-[1.6rem] border p-4 text-left transition-all ${isSelected
-                          ? "border-primary/25 bg-primary/8 shadow-[0_18px_40px_-30px_rgba(88,70,52,0.45)]"
-                          : "border-transparent bg-white/70 hover:border-border/70 hover:bg-white"
+                        ? "border-primary/25 bg-primary/8 shadow-[0_18px_40px_-30px_rgba(88,70,52,0.45)]"
+                        : "border-transparent bg-white/70 hover:border-border/70 hover:bg-white"
                         }`}
                     >
                       <div className="flex items-start gap-3">
@@ -387,7 +387,7 @@ export default function MessagesPageClient({
                           <p className=" truncate text-sm text-muted-foreground">
                             {conversation.preview}
                           </p>
-                          
+
                         </div>
                       </div>
                     </button>
@@ -445,7 +445,7 @@ export default function MessagesPageClient({
                               }`}
                           />
                         </div>
-                       
+
                         <p className="mt-1 text-xs font-medium text-muted-foreground/90">
                           {selectedConversation.lastSeen}
                         </p>
@@ -467,7 +467,7 @@ export default function MessagesPageClient({
 
                 <div className="flex-1 overflow-hidden bg-[linear-gradient(180deg,rgba(250,246,241,0.96),rgba(244,236,229,0.92))] p-4 sm:p-6 lg:min-h-0">
                   <div className="mx-auto flex h-full min-h-0 max-w-4xl flex-col lg:min-h-0">
-                   
+
                     <div className="flex-1 space-y-4 overflow-y-auto pr-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden lg:min-h-0">
                       {selectedMessages.length ? (
                         selectedMessages.map((message) => {
@@ -503,15 +503,15 @@ export default function MessagesPageClient({
                               )}
                               <div
                                 className={`max-w-[85%] rounded-[1.6rem] px-4 py-3 shadow-sm sm:max-w-[70%] ${isMe
-                                    ? "bg-primary text-primary-foreground"
-                                    : "border border-white/70 bg-white text-foreground"
+                                  ? "bg-primary text-primary-foreground"
+                                  : "border border-white/70 bg-white text-foreground"
                                   }`}
                               >
                                 <p className="text-sm leading-6">{message.text}</p>
                                 <p
                                   className={` text-[11px] font-medium ${isMe
-                                      ? "text-primary-foreground/80"
-                                      : "text-muted-foreground"
+                                    ? "text-primary-foreground/80"
+                                    : "text-muted-foreground"
                                     }`}
                                 >
                                   {message.time}

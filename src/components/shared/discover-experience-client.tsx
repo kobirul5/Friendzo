@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CalendarDays, Flame, LoaderCircle, MapPin, Sparkles, TrendingUp, Users } from "lucide-react";
 
 import { FindFriendRequestButton } from "@/components/find-friend-request-button";
@@ -178,6 +178,41 @@ export default function DiscoverExperienceClient({ interests }: { interests: Int
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [interestImageErrors, setInterestImageErrors] = useState<Set<string>>(new Set());
 
+  // Drag scroll state
+  const interestScrollRef = useRef<HTMLDivElement>(null);
+  const isDraggingRef = useRef(false);
+  const dragStartXRef = useRef(0);
+  const dragStartScrollLeftRef = useRef(0);
+
+  const handleInterestPointerDown = (e: React.PointerEvent) => {
+    if (!interestScrollRef.current) return;
+    isDraggingRef.current = false;
+    dragStartXRef.current = e.clientX;
+    dragStartScrollLeftRef.current = interestScrollRef.current.scrollLeft;
+  };
+
+  const handleInterestPointerMove = (e: React.PointerEvent) => {
+    if (!interestScrollRef.current) return;
+    const dx = e.clientX - dragStartXRef.current;
+    if (Math.abs(dx) > 8) {
+      isDraggingRef.current = true;
+      interestScrollRef.current.style.cursor = "grabbing";
+      interestScrollRef.current.setPointerCapture(e.pointerId);
+    }
+    if (!isDraggingRef.current) return;
+    e.preventDefault();
+    interestScrollRef.current.scrollLeft = dragStartScrollLeftRef.current - dx;
+  };
+
+  const handleInterestPointerUp = (e: React.PointerEvent) => {
+    if (!interestScrollRef.current) return;
+    isDraggingRef.current = false;
+    interestScrollRef.current.style.cursor = "grab";
+    if (interestScrollRef.current.hasPointerCapture(e.pointerId)) {
+      interestScrollRef.current.releasePointerCapture(e.pointerId);
+    }
+  };
+
   useEffect(() => {
     let ignore = false;
     const loadMatches = async () => {
@@ -303,86 +338,138 @@ export default function DiscoverExperienceClient({ interests }: { interests: Int
   return (
     <section className="space-y-6">
       <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/88 shadow-[0_24px_70px_-40px_rgba(88,70,52,0.45)] backdrop-blur-md">
-        <div className="relative overflow-hidden px-5 py-6 sm:px-6">
-          <div className="absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top_left,rgba(198,167,131,0.32),transparent_55%),radial-gradient(circle_at_top_right,rgba(240,220,190,0.65),transparent_45%)]" />
-          <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/70">Explore people</p>
-              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Discover your next circle</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-                Pick an interest, browse similar profiles, switch to nearby people, or check what is buzzing today.
-              </p>
-            </div>
-            <div className="grid grid-cols-3 gap-3 sm:min-w-[320px]">
-              <div className="rounded-[1.4rem] bg-primary/7 px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.18em] text-primary/70">Interest</p>
-                <p className="mt-2 text-lg font-semibold text-foreground">{selectedInterest}</p>
-              </div>
-              <div className="rounded-[1.4rem] bg-primary/7 px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.18em] text-primary/70">Matches</p>
-                <p className="mt-2 text-lg font-semibold text-foreground">{matchUsers.length}</p>
-              </div>
-              <div className="rounded-[1.4rem] bg-primary/7 px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.18em] text-primary/70">Buzz</p>
-                <p className="mt-2 text-lg font-semibold text-foreground">{buzzEvents.length + buzzUsers.length}</p>
-              </div>
-            </div>
-          </div>
-          <div className="relative mt-6 flex w-full gap-3 overflow-x-auto pb-2">
-            {interests.map((interest) => {
-              const isActive = interest.name === selectedInterest;
-              return (
-                <button
-                  key={interest.name}
-                  type="button"
-                  onClick={() => {
-                    setSelectedInterest(interest.name);
-                    setActiveTab("match");
-                  }}
-                  className={`group relative min-w-37.5 overflow-hidden rounded-[1.5rem] border text-left transition-transform hover:-translate-y-0.5 ${
-                    isActive ? "border-primary/40 shadow-[0_18px_35px_-28px_rgba(88,70,52,0.6)]" : "border-white/55"
-                  }`}
-                >
-                  <div className="relative h-28">
-                    <Image
-                      src={(!interestImageErrors.has(interest.name) && interest.image) ? interest.image : FALLBACK_INTEREST_IMAGE}
-                      alt={interest.name}
-                      fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      onError={() =>
-                        setInterestImageErrors((prev) => new Set(prev).add(interest.name))
-                      }
-                    />
-                    <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
-                    <div className="absolute inset-x-0 bottom-0 p-3">
-                      <p className="text-sm font-semibold text-white">{interest.name}</p>
-                    </div>
+        <div className="relative overflow-hidden px-5 py-8 sm:px-8">
+          {/* Background decoration */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(232,209,172,0.45),transparent_65%),radial-gradient(ellipse_at_bottom_left,rgba(198,167,131,0.25),transparent_55%)]" />
+          <div className="absolute -right-32 -top-32 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
+          <div className="absolute -left-32 -bottom-32 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
+
+          <div className="relative flex flex-col gap-6">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-6">
+              <div className="max-w-xl">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br from-primary/20 to-primary/10">
+                    <Sparkles className="h-6 w-6 text-primary" />
                   </div>
-                </button>
-              );
-            })}
-          </div>
-          <div className="mt-6 flex flex-wrap gap-3">
-            {TAB_OPTIONS.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.key;
-              return (
-                <Button
-                  key={tab.key}
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`rounded-full px-5 py-6 text-sm ${
-                    isActive
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
-                      : "border border-border/70 bg-white text-foreground hover:bg-primary/5"
-                  }`}
-                >
-                  <Icon className="mr-2 h-4 w-4" />
-                  {tab.label}
-                </Button>
-              );
-            })}
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
+                    Discover
+                  </p>
+                </div>
+                <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                  Find your people
+                </h1>
+                <p className="mt-2 text-base leading-relaxed text-muted-foreground">
+                  Explore interests, discover nearby friends, and see what's trending today.
+                </p>
+              </div>
+
+              {/* Stats Cards */}
+              <div className="hidden sm:grid sm:grid-cols-3 gap-3">
+                <div className="rounded-2xl border border-white/60 bg-white/70 px-5 py-3 shadow-sm backdrop-blur-sm">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary/60">
+                    Interest
+                  </p>
+                  <p className="mt-1 text-lg font-bold text-foreground">
+                    {selectedInterest.length > 8 ? selectedInterest.slice(0, 8) + "…" : selectedInterest}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-white/60 bg-white/70 px-5 py-3 shadow-sm backdrop-blur-sm">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary/60">
+                    Matches
+                  </p>
+                  <p className="mt-1 text-lg font-bold text-foreground">{matchUsers.length}</p>
+                </div>
+                <div className="rounded-2xl border border-white/60 bg-white/70 px-5 py-3 shadow-sm backdrop-blur-sm">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary/60">
+                    Trending
+                  </p>
+                  <p className="mt-1 text-lg font-bold text-foreground">{buzzEvents.length + buzzUsers.length}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Interest Scroll */}
+            <div
+              ref={interestScrollRef}
+              className="scrollbar-hide -mx-5 cursor-grab overflow-x-auto px-5 pb-3 select-none sm:-mx-8 sm:px-8"
+              onPointerDown={handleInterestPointerDown}
+              onPointerMove={handleInterestPointerMove}
+              onPointerUp={handleInterestPointerUp}
+              onPointerCancel={handleInterestPointerUp}
+            >
+              <div className="flex w-full flex-nowrap gap-3">
+                {interests.map((interest) => {
+                  const isActive = interest.name === selectedInterest;
+                  return (
+                    <button
+                      key={interest.name}
+                      type="button"
+                      onClick={(e) => {
+                        if (isDraggingRef.current) {
+                          e.stopPropagation();
+                          return;
+                        }
+                        setSelectedInterest(interest.name);
+                        setActiveTab("match");
+                      }}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      className="group relative shrink-0 overflow-hidden rounded-2xl border transition-all duration-200"
+                      style={{
+                        minWidth: "140px",
+                        borderColor: isActive ? "rgba(198,167,131,0.5)" : "rgba(255,255,255,0.4)",
+                        boxShadow: isActive ? "0 8px 30px -15px rgba(198,167,131,0.5)" : "none",
+                        transform: isActive ? "scale(1.02)" : "scale(1)",
+                      }}
+                    >
+                      <div className="relative h-24">
+                        <Image
+                          src={(!interestImageErrors.has(interest.name) && interest.image) ? interest.image : FALLBACK_INTEREST_IMAGE}
+                          alt={interest.name}
+                          fill
+                          className="object-cover transition-transform duration-300 group-hover:scale-110"
+                          onError={() =>
+                            setInterestImageErrors((prev) => new Set(prev).add(interest.name))
+                          }
+                        />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-transparent" />
+                        <div className="absolute inset-x-0 bottom-0 px-3 py-2">
+                          <p className="text-sm font-semibold text-white">{interest.name}</p>
+                        </div>
+                      </div>
+                      {isActive && (
+                        <div className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary/90 text-white">
+                          <Sparkles className="h-3.5 w-3.5" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Tab Buttons */}
+            <div className="flex items-center gap-2">
+              {TAB_OPTIONS.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.key;
+                return (
+                  <Button
+                    key={tab.key}
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`rounded-full px-5 py-5 text-sm font-medium transition-all ${isActive
+                        ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90"
+                        : "border border-white/60 bg-white/80 text-foreground hover:bg-primary/5 backdrop-blur-sm"
+                      }`}
+                  >
+                    <Icon className={`mr-2 h-4 w-4 ${isActive ? "text-primary-foreground" : "text-primary"}`} />
+                    {tab.label}
+                  </Button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
