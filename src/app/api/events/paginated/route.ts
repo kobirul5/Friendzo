@@ -193,7 +193,6 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { searchParams } = new URL(request.url);
   const page = searchParams.get("page") || "1";
   const limit = searchParams.get("limit") || "6";
 
