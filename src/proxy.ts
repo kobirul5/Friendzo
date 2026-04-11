@@ -1,8 +1,9 @@
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { cookies } from 'next/headers';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { getDefaultDashboardRoute, getRouteOwner, isAuthRoute, UserRole } from './lib/auth-utils';
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
 const normalizeTokenRole = (role: unknown): UserRole | null => {
     if (role === "ADMIN") {
@@ -16,11 +17,31 @@ const normalizeTokenRole = (role: unknown): UserRole | null => {
     return null;
 }
 
+const clearAuthCookies = (response: NextResponse) => {
+    response.cookies.set("accessToken", "", { path: "/", maxAge: 0 });
+    response.cookies.set("refreshToken", "", { path: "/", maxAge: 0 });
+    return response;
+};
+
+const redirectToLoginWithClearedAuth = (request: NextRequest) => {
+    return clearAuthCookies(NextResponse.redirect(new URL("/login", request.url)));
+};
+
+const isUserNotFoundResponse = async (response: Response) => {
+    if (response.status !== 404) {
+        return false;
+    }
+
+    try {
+        const payload = await response.json();
+        return typeof payload?.message === "string" && payload.message.toLowerCase().includes("user not found");
+    } catch {
+        return true;
+    }
+};
 
 
-// This function can be marked `async` if using `await` inside
 export async function proxy(request: NextRequest) {
-    const cookieStore = await cookies()
     const pathname = request.nextUrl.pathname;
 
     const accessToken = request.cookies.get("accessToken")?.value || null;
@@ -33,24 +54,33 @@ export async function proxy(request: NextRequest) {
             const verifiedToken: JwtPayload | string = jwt.verify(accessToken, process.env.JWT_SECRET as string);
 
             if (typeof verifiedToken === "string") {
-                cookieStore.delete("accessToken");
-                cookieStore.delete("refreshToken");
-                return NextResponse.redirect(new URL('/login', request.url));
+                return redirectToLoginWithClearedAuth(request);
             }
 
             userRole = normalizeTokenRole(verifiedToken.role);
             isVerified = verifiedToken.isVerified;
 
             if (!userRole) {
-                cookieStore.delete("accessToken");
-                cookieStore.delete("refreshToken");
-                return NextResponse.redirect(new URL('/login', request.url));
+                return redirectToLoginWithClearedAuth(request);
+            }
+
+            if (typeof verifiedToken.id === "string") {
+                const userResponse = await fetch(`${BASE_URL}/users/${verifiedToken.id}`, {
+                    method: "GET",
+                    headers: {
+                        Authorization: accessToken,
+                        "Content-Type": "application/json",
+                    },
+                    cache: "no-store",
+                });
+
+                if (userResponse.status === 401 || (await isUserNotFoundResponse(userResponse.clone()))) {
+                    return redirectToLoginWithClearedAuth(request);
+                }
             }
         } catch (error) {
             console.error("JWT Verification Error in proxy:", error);
-            cookieStore.delete("accessToken");
-            cookieStore.delete("refreshToken");
-            return NextResponse.redirect(new URL('/login', request.url));
+            return redirectToLoginWithClearedAuth(request);
         }
     }
 
@@ -68,9 +98,7 @@ export async function proxy(request: NextRequest) {
     }
 
     if (!userRole) {
-        const loginUrl = new URL("/login", request.url);
-        loginUrl.searchParams.set("redirect", pathname);
-        return NextResponse.redirect(loginUrl);
+        return redirectToLoginWithClearedAuth(request);
     }
 
     // Rule for unverified users
@@ -78,8 +106,9 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(new URL('/verify-otp', request.url));
     }
 
-    // Rule 1 : User is logged in and trying to access auth route. Redirect to default dashboard
-    if (isAuth && userRole) {
+    // Rule 1 : Logged-in verified users should not see auth routes.
+    // Unverified users must be allowed to stay on /verify-otp.
+    if (isAuth && userRole && !(pathname === "/verify-otp" && isVerified === false)) {
         return NextResponse.redirect(new URL(getDefaultDashboardRoute(userRole), request.url))
     }
 
