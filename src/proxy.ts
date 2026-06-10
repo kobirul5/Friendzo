@@ -44,6 +44,12 @@ const isUserNotFoundResponse = async (response: Response) => {
 export async function proxy(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
 
+    const isStaticAssetRequest = pathname.startsWith("/assets/") || /\.[a-zA-Z0-9]+$/.test(pathname);
+
+    if (isStaticAssetRequest) {
+        return NextResponse.next();
+    }
+
     const accessToken = request.cookies.get("accessToken")?.value || null;
 
     let userRole: UserRole | null = null;
