@@ -38,9 +38,6 @@ export async function toggleEventLike(eventId: string): Promise<{
       return { success: false, message: result?.message || "Failed to toggle like." };
     }
 
-    revalidatePath("/events");
-    revalidatePath("/");
-
     return {
       success: true,
       message: result?.message || "Like toggled.",

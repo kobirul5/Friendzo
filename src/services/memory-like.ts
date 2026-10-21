@@ -41,8 +41,6 @@ export async function likeMemory(memoryId: string): Promise<any> {
       return { success: false, message: result?.message || "Failed to like memory." };
     }
 
-    revalidatePath("/");
-
     return { success: true, message: result?.message || "Like added." };
   } catch (error) {
     console.error("Like memory failed:", error);
@@ -72,8 +70,6 @@ export async function unlikeMemory(memoryId: string): Promise<any> {
     if (!res.ok || !result?.success) {
       return { success: false, message: result?.message || "Failed to remove like." };
     }
-
-    revalidatePath("/");
 
     return { success: true, message: result?.message || "Like removed." };
   } catch (error) {

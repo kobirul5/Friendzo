@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { CalendarDays, LoaderCircle, MapPin, Sparkles, Heart } from "lucide-react";
+import { toast } from "sonner";
 import { toggleEventLike } from "@/services/event-like";
 
 type FeedUser = {
@@ -80,18 +81,76 @@ export default function EventsFeedClient({
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
+  const [pendingLikeIds, setPendingLikeIds] = useState<Set<string>>(new Set());
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const handleLike = async (eventId: string) => {
-    const result = await toggleEventLike(eventId);
-    if (result.success) {
+    if (pendingLikeIds.has(eventId)) return;
+
+    const currentItem = items.find((item) => item.id === eventId);
+    if (!currentItem) return;
+
+    const prevIsLiked = !!currentItem.isLiked;
+    const prevLikeCount = currentItem.likeCount || 0;
+    const nextIsLiked = !prevIsLiked;
+    const delta = nextIsLiked ? 1 : -1;
+
+    // 1. Optimistic update
+    setItems((current) =>
+      current.map((item) =>
+        item.id === eventId
+          ? {
+              ...item,
+              isLiked: nextIsLiked,
+              likeCount: Math.max(0, prevLikeCount + delta),
+            }
+          : item
+      )
+    );
+
+    setPendingLikeIds((prev) => new Set(prev).add(eventId));
+
+    try {
+      const result = await toggleEventLike(eventId);
+      if (result.success) {
+        setItems((current) =>
+          current.map((item) =>
+            item.id === eventId
+              ? {
+                  ...item,
+                  isLiked: result.liked ?? nextIsLiked,
+                  likeCount: result.likeCount ?? Math.max(0, prevLikeCount + delta),
+                }
+              : item
+          )
+        );
+      } else {
+        // Rollback
+        setItems((current) =>
+          current.map((item) =>
+            item.id === eventId
+              ? { ...item, isLiked: prevIsLiked, likeCount: prevLikeCount }
+              : item
+          )
+        );
+        toast.error(result?.message || "Failed to update like.");
+      }
+    } catch (error) {
+      // Rollback
       setItems((current) =>
         current.map((item) =>
           item.id === eventId
-            ? { ...item, isLiked: result.liked, likeCount: result.likeCount }
+            ? { ...item, isLiked: prevIsLiked, likeCount: prevLikeCount }
             : item
         )
       );
+      toast.error("Network error while updating like.");
+    } finally {
+      setPendingLikeIds((prev) => {
+        const next = new Set(prev);
+        next.delete(eventId);
+        return next;
+      });
     }
   };
 
@@ -302,14 +361,16 @@ export default function EventsFeedClient({
 
                         <div className="flex items-center gap-3">
                           <button
+                            type="button"
                             onClick={() => handleLike(item.id)}
-                            className={`inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm backdrop-blur-md transition-colors ${
+                            disabled={pendingLikeIds.has(item.id)}
+                            className={`inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm backdrop-blur-md transition-all active:scale-95 ${
                               item.isLiked
-                                ? "bg-red-500/80 text-white hover:bg-red-600/80"
+                                ? "bg-red-500/80 text-white hover:bg-red-600/80 shadow-sm"
                                 : "bg-white/15 text-white hover:bg-white/25"
-                            }`}
+                            } ${pendingLikeIds.has(item.id) ? "opacity-80" : ""}`}
                           >
-                            <Heart className={`h-4 w-4 ${item.isLiked ? "fill-current" : ""}`} />
+                            <Heart className={`h-4 w-4 transition-transform ${item.isLiked ? "fill-current scale-110" : ""}`} />
                             <span>{item.likeCount || 0}</span>
                           </button>
                           <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-3 text-sm text-white backdrop-blur-md">

@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { confirmToast } from "@/components/shared/ConfirmToast";
+import { toast } from "sonner";
 import {
   createMemoryComment,
   deleteMemoryComment,
@@ -298,18 +299,18 @@ function FeedCard({
                   type="button"
                   onClick={() => onToggleLike(item.id, !!item.isLiked)}
                   disabled={isPending}
-                  className={`inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm font-medium backdrop-blur-md transition ${
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm font-medium backdrop-blur-md transition-all active:scale-95 ${
                     item.isLiked
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-primary text-primary-foreground shadow-sm"
                       : "bg-white/15 text-white hover:bg-white/25"
-                  }`}
+                  } ${isPending ? "opacity-80" : ""}`}
                 >
                   {isPending ? (
                     <LoaderCircle className="h-4 w-4 animate-spin" />
                   ) : (
-                    <Heart className={`h-4 w-4 ${item.isLiked ? "fill-current" : ""}`} />
+                    <Heart className={`h-4 w-4 transition-transform duration-150 ${item.isLiked ? "fill-current scale-110" : ""}`} />
                   )}
-                  {item.isLiked ? "Unlike" : "Like"}
+                  <span>{item.isLiked ? "Unlike" : "Like"}</span>
                 </button>
 
                 <button
@@ -350,7 +351,7 @@ export default function MemoriesFeedClient({
   pageSize: number;
 }) {
   const [items, setItems] = useState(initialItems);
-  const [isPending, startTransition] = useTransition();
+  const [pendingLikeIds, setPendingLikeIds] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -394,39 +395,106 @@ export default function MemoriesFeedClient({
     return () => observer.disconnect();
   }, [hasMore, isLoadingMore, page]);
 
-  const handleToggleLike = (memoryId: string, isLiked: boolean) => {
-    startTransition(async () => {
+  const handleToggleLike = async (memoryId: string, isLiked: boolean) => {
+    if (pendingLikeIds.has(memoryId)) return;
+
+    // 1. Optimistic update (immediate UI feedback)
+    const nextIsLiked = !isLiked;
+    const delta = nextIsLiked ? 1 : -1;
+
+    setItems((currentItems) =>
+      currentItems.map((item) =>
+        item.id === memoryId
+          ? {
+              ...item,
+              isLiked: nextIsLiked,
+              totalLikes: Math.max(0, (item.totalLikes || 0) + delta),
+            }
+          : item
+      )
+    );
+
+    if (selectedMemory?.id === memoryId) {
+      setSelectedMemory((prev) =>
+        prev
+          ? {
+              ...prev,
+              isLiked: nextIsLiked,
+              totalLikes: Math.max(0, (prev.totalLikes || 0) + delta),
+            }
+          : null
+      );
+    }
+
+    // 2. Track pending state for this specific memory
+    setPendingLikeIds((prev) => new Set(prev).add(memoryId));
+
+    try {
       const action = isLiked ? unlikeMemory : likeMemory;
       const result = await action(memoryId);
 
       if (!result?.success) {
-        return;
-      }
+        // Rollback optimistic update
+        setItems((currentItems) =>
+          currentItems.map((item) =>
+            item.id === memoryId
+              ? {
+                  ...item,
+                  isLiked: isLiked,
+                  totalLikes: Math.max(0, (item.totalLikes || 0) - delta),
+                }
+              : item
+          )
+        );
 
+        if (selectedMemory?.id === memoryId) {
+          setSelectedMemory((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  isLiked: isLiked,
+                  totalLikes: Math.max(0, (prev.totalLikes || 0) - delta),
+                }
+              : null
+          );
+        }
+
+        toast.error(result?.message || "Failed to update like.");
+      }
+    } catch (error) {
+      // Rollback on network/server error
       setItems((currentItems) =>
         currentItems.map((item) =>
           item.id === memoryId
             ? {
                 ...item,
-                isLiked: !isLiked,
-                totalLikes: Math.max(0, (item.totalLikes || 0) + (isLiked ? -1 : 1)),
+                isLiked: isLiked,
+                totalLikes: Math.max(0, (item.totalLikes || 0) - delta),
               }
             : item
         )
       );
 
       if (selectedMemory?.id === memoryId) {
-        const updatedLikeCount = Math.max(
-          0,
-          (selectedMemory.totalLikes || 0) + (isLiked ? -1 : 1)
+        setSelectedMemory((prev) =>
+          prev
+            ? {
+                ...prev,
+                isLiked: isLiked,
+                totalLikes: Math.max(0, (prev.totalLikes || 0) - delta),
+              }
+            : null
         );
-        setSelectedMemory({
-          ...selectedMemory,
-          isLiked: !isLiked,
-          totalLikes: updatedLikeCount,
-        });
       }
-    });
+
+      toast.error("Something went wrong with like.");
+    } finally {
+      setPendingLikeIds((prev) => {
+        const next = new Set(prev);
+        next.delete(memoryId);
+        return next;
+      });
+    }
   };
 
   const handleViewLikes = async (item: MemoryFeedItem) => {
@@ -628,7 +696,7 @@ export default function MemoriesFeedClient({
                 onToggleLike={handleToggleLike}
                 onViewLikes={handleViewLikes}
                 onViewComments={handleViewComments}
-                isPending={isPending}
+                isPending={pendingLikeIds.has(item.id)}
               />
             ))}
 
