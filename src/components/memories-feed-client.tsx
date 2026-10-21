@@ -298,18 +298,17 @@ function FeedCard({
                 <button
                   type="button"
                   onClick={() => onToggleLike(item.id, !!item.isLiked)}
-                  disabled={isPending}
                   className={`inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm font-medium backdrop-blur-md transition-all active:scale-95 ${
                     item.isLiked
                       ? "bg-primary text-primary-foreground shadow-sm"
                       : "bg-white/15 text-white hover:bg-white/25"
-                  } ${isPending ? "opacity-80" : ""}`}
+                  }`}
                 >
-                  {isPending ? (
-                    <LoaderCircle className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Heart className={`h-4 w-4 transition-transform duration-150 ${item.isLiked ? "fill-current scale-110" : ""}`} />
-                  )}
+                  <Heart
+                    className={`h-4 w-4 transition-transform duration-200 active:scale-125 ${
+                      item.isLiked ? "fill-current scale-110 text-primary-foreground" : ""
+                    }`}
+                  />
                   <span>{item.isLiked ? "Unlike" : "Like"}</span>
                 </button>
 
