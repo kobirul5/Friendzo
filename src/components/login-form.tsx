@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useActionState, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { loginUser } from "@/services/auth/login";
 import Link from "next/link";
 import { LucideArrowRight, Mail, Lock, User, Shield, LoaderCircle } from "lucide-react";
@@ -27,7 +28,12 @@ export default function LoginForm({ quickLoginUser, quickLoginAdmin }: QuickLogi
   const [state, formAction, isPending] = useActionState(loginUser, null);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [quickRole, setQuickRole] = useState<"user" | "admin" | null>(null);
+  const [mounted, setMounted] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Pre-cache destination routes as soon as login page loads to ensure instant transitions
   useEffect(() => {
@@ -40,7 +46,7 @@ export default function LoginForm({ quickLoginUser, quickLoginAdmin }: QuickLogi
       setIsRedirecting(true);
       if (state.data?.isVerified) {
         toast.success("Login successful!", {
-          description: "Welcome back! Redirecting...",
+          description: "Welcome back!",
         });
         router.push("/");
       } else {
@@ -104,11 +110,36 @@ export default function LoginForm({ quickLoginUser, quickLoginAdmin }: QuickLogi
 
   return (
     <>
-      {isRedirecting && (
-        <div className="flex items-center justify-center gap-3 p-3.5 mb-6 rounded-2xl bg-primary/10 border border-primary/20 text-primary font-semibold text-sm animate-in fade-in slide-in-from-top-2 duration-300">
-          <LoaderCircle className="h-4 w-4 animate-spin text-primary shrink-0" />
-          <span>Login successful! Preparing your feed...</span>
-        </div>
+      {/* Full-screen Redirect Modal */}
+      {mounted && isRedirecting && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="relative w-full max-w-sm rounded-[32px] bg-card/95 border border-white/20 p-8 shadow-2xl shadow-primary/25 text-center space-y-6 animate-in zoom-in-95 fade-in duration-300">
+            {/* Animated glowing spinner */}
+            <div className="relative mx-auto flex items-center justify-center w-20 h-20">
+              <div className="absolute inset-0 rounded-full bg-primary/25 blur-xl animate-pulse" />
+              <div className="relative flex items-center justify-center w-18 h-18 rounded-full bg-primary/10 border border-primary/25 shadow-inner">
+                <LoaderCircle className="h-9 w-9 text-primary animate-spin" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black tracking-tight text-foreground">
+                Welcome Back!
+              </h3>
+              <p className="text-sm font-medium text-muted-foreground">
+                {state?.data?.isVerified
+                  ? "Login successful! Redirecting to feed..."
+                  : "Redirecting to verification..."}
+              </p>
+            </div>
+
+            {/* Smooth animated progress line */}
+            <div className="w-full h-1.5 bg-primary/10 rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full animate-pulse w-full" />
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
 
       {(quickLoginUser || quickLoginAdmin) && (
